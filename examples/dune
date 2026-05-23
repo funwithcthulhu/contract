@@ -1,0 +1,3 @@
+(executable
+ (name users_api)
+ (libraries contract yojson))
