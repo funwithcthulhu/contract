@@ -72,15 +72,15 @@ let operation_to_yojson endpoint =
 
 let add_endpoint paths endpoint =
   let path = Path_template.to_openapi_path endpoint.Endpoint.path in
-  let meth = Endpoint.meth_to_openapi_key endpoint.meth in
+  let method_ = Endpoint.method_to_openapi_key endpoint.method_ in
   let operation = operation_to_yojson endpoint in
   match List.assoc_opt path paths with
-  | None -> paths @ [ (path, `Assoc [ (meth, operation) ]) ]
+  | None -> paths @ [ (path, `Assoc [ (method_, operation) ]) ]
   | Some (`Assoc methods_) ->
       let paths_without_current =
         List.filter (fun (candidate, _) -> not (String.equal candidate path)) paths
       in
-      paths_without_current @ [ (path, `Assoc (methods_ @ [ (meth, operation) ])) ]
+      paths_without_current @ [ (path, `Assoc (methods_ @ [ (method_, operation) ])) ]
   | Some _ -> paths
 
 let to_yojson api =

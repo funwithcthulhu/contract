@@ -18,15 +18,21 @@ let create_user_codec =
     ~decode:(fun _ -> Ok ())
     ()
 
+let expect_endpoint = function
+  | Ok endpoint -> endpoint
+  | Error error -> Alcotest.fail (Error.to_string error)
+
 let get_user =
   Endpoint.get ~summary:"Fetch a user" ~operation_id:"getUser" "/users/:id"
-  |> Endpoint.path_param "id" Codec.int
-  |> Endpoint.response ~status:200 user_codec
+  |> Result.map (Endpoint.path_param "id" Codec.int)
+  |> Result.map (Endpoint.response ~status:200 user_codec)
+  |> expect_endpoint
 
 let post_user =
   Endpoint.post ~summary:"Create a user" ~operation_id:"createUser" "/users"
-  |> Endpoint.body create_user_codec
-  |> Endpoint.response ~status:201 user_codec
+  |> Result.map (Endpoint.body create_user_codec)
+  |> Result.map (Endpoint.response ~status:201 user_codec)
+  |> expect_endpoint
 
 let api : Openapi.api =
   { title = "Users API"; version = "0.1.0"; endpoints = [ get_user; post_user ] }

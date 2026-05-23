@@ -1,3 +1,15 @@
 (lang dune 3.11)
 
 (name contract)
+
+(package
+ (name contract)
+ (synopsis "Typed HTTP API contracts for OCaml")
+ (description
+  "A pure core for typed HTTP API contracts, request validation, and OpenAPI output.")
+ (license MIT)
+ (depends
+  (ocaml (>= 5.0))
+  (dune (>= 3.11))
+  (yojson (>= 2.0.0))
+  (alcotest :with-test)))

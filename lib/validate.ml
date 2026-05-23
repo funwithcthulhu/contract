@@ -45,12 +45,12 @@ let validate_body endpoint_body request_body =
       | Error error -> Some error)
 
 let request endpoint request =
-  if endpoint.Endpoint.meth <> request.Request.meth then
+  if endpoint.Endpoint.method_ <> request.Request.method_ then
     Error
       [
         Error.make ~location:Error.Method
-          ~expected:(Endpoint.meth_to_string endpoint.meth)
-          ~got:(Endpoint.meth_to_string request.meth)
+          ~expected:(Endpoint.method_to_string endpoint.method_)
+          ~got:(Endpoint.method_to_string request.method_)
           "HTTP method does not match";
       ]
   else

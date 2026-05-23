@@ -1,3 +1,5 @@
+(** Structured validation and decoding errors. *)
+
 type location =
   | Method
   | Route
@@ -13,6 +15,8 @@ type t = {
   got : string option;
 }
 
+(** [make ~location message] constructs an error with optional expected and
+    observed values for diagnostics. *)
 val make :
   ?expected:string ->
   ?got:string ->

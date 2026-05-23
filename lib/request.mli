@@ -1,5 +1,9 @@
+(** Pure HTTP-like request value used by the validator.
+
+    Query values are already split into key/value pairs. The library does not
+    parse URLs or perform percent-decoding yet. *)
 type t = {
-  meth : Endpoint.meth;
+  method_ : Endpoint.method_;
   path : string;
   query : (string * string) list;
   body : Yojson.Safe.t option;
@@ -8,7 +12,7 @@ type t = {
 val make :
   ?query:(string * string) list ->
   ?body:Yojson.Safe.t ->
-  meth:Endpoint.meth ->
+  method_:Endpoint.method_ ->
   path:string ->
   unit ->
   t

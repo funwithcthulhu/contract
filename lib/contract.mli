@@ -1,3 +1,5 @@
+(** Public entrypoint for the contract library. *)
+
 module Error = Error
 module Schema = Schema
 module Codec = Codec

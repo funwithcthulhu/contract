@@ -1,3 +1,8 @@
+(** Manual JSON codecs for request bodies and schemas.
+
+    These codecs are deliberately direct. Record codecs should usually be
+    written by hand with [required_field] and [optional_field]. *)
+
 type 'a t = {
   name : string option;
   schema : Schema.t;
@@ -17,15 +22,24 @@ val string : string t
 val int : int t
 val bool : bool t
 val float : float t
+
+(** [option codec] treats JSON [null] as [None]. *)
 val option : 'a t -> 'a option t
+
+(** Decodes every list item with the supplied codec and stops at the first
+    error. *)
 val list : 'a t -> 'a list t
 
+(** Decode a required field from a JSON object. Missing fields and non-object
+    values return [Error]. *)
 val required_field :
   string ->
   'a t ->
   Yojson.Safe.t ->
   ('a, Error.t) result
 
+(** Decode an optional field from a JSON object. Missing fields and JSON [null]
+    both return [Ok None]. *)
 val optional_field :
   string ->
   'a t ->

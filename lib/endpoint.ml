@@ -1,42 +1,41 @@
-type meth =
+type method_ =
   | GET
   | POST
   | PUT
   | PATCH
   | DELETE
 
-type packed_param =
-  | Path_param : string * 'a Codec.t -> packed_param
-  | Query_param : string * bool * 'a Codec.t -> packed_param
+type param =
+  | Path_param : string * 'a Codec.t -> param
+  | Query_param : string * bool * 'a Codec.t -> param
 
 type body = Body : 'a Json_codec.t -> body
 type response = Response : int * 'a Json_codec.t option -> response
 
 type t = {
-  meth : meth;
+  method_ : method_;
   path : Path_template.t;
   summary : string option;
   operation_id : string option;
-  params : packed_param list;
+  params : param list;
   body : body option;
   responses : response list;
 }
 
-let parse_path_exn path =
+let make ?summary ?operation_id method_ path =
   match Path_template.parse path with
-  | Ok path -> path
-  | Error error -> invalid_arg (Error.to_string error)
-
-let make ?summary ?operation_id meth path =
-  {
-    meth;
-    path = parse_path_exn path;
-    summary;
-    operation_id;
-    params = [];
-    body = None;
-    responses = [];
-  }
+  | Error error -> Error error
+  | Ok path ->
+      Ok
+        {
+          method_;
+          path;
+          summary;
+          operation_id;
+          params = [];
+          body = None;
+          responses = [];
+        }
 
 let get ?summary ?operation_id path = make ?summary ?operation_id GET path
 let post ?summary ?operation_id path = make ?summary ?operation_id POST path
@@ -59,14 +58,14 @@ let response ~status codec endpoint =
 let empty_response ~status endpoint =
   { endpoint with responses = endpoint.responses @ [ Response (status, None) ] }
 
-let meth_to_string = function
+let method_to_string = function
   | GET -> "GET"
   | POST -> "POST"
   | PUT -> "PUT"
   | PATCH -> "PATCH"
   | DELETE -> "DELETE"
 
-let meth_to_openapi_key = function
+let method_to_openapi_key = function
   | GET -> "get"
   | POST -> "post"
   | PUT -> "put"

@@ -4,6 +4,7 @@
   test_contract
   test_path_template
   test_codec
+  test_endpoint
   test_json_codec
   test_validate
   test_openapi)

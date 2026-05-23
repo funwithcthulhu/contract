@@ -28,16 +28,22 @@ let create_user_codec =
   in
   Json_codec.make ~name:"CreateUser" ~schema ~encode ~decode ()
 
+let expect_endpoint = function
+  | Ok endpoint -> endpoint
+  | Error error -> Alcotest.fail (Error.to_string error)
+
 let get_user =
   Endpoint.get "/users/:id"
-  |> Endpoint.path_param "id" Codec.int
-  |> Endpoint.query_param "include_deleted" Codec.bool
-  |> Endpoint.response ~status:200 Json_codec.string
+  |> Result.map (Endpoint.path_param "id" Codec.int)
+  |> Result.map (Endpoint.query_param "include_deleted" Codec.bool)
+  |> Result.map (Endpoint.response ~status:200 Json_codec.string)
+  |> expect_endpoint
 
 let post_user =
   Endpoint.post "/users"
-  |> Endpoint.body create_user_codec
-  |> Endpoint.response ~status:201 Json_codec.string
+  |> Result.map (Endpoint.body create_user_codec)
+  |> Result.map (Endpoint.response ~status:201 Json_codec.string)
+  |> expect_endpoint
 
 let expect_valid = function
   | Ok validated -> validated
@@ -51,7 +57,7 @@ let expect_error = function
 
 let valid_get () =
   let request =
-    Request.make ~meth:Endpoint.GET ~path:"/users/42"
+    Request.make ~method_:Endpoint.GET ~path:"/users/42"
       ~query:[ ("include_deleted", "false") ]
       ()
   in
@@ -68,22 +74,22 @@ let valid_get () =
   | Error error -> Alcotest.fail (Error.to_string error)
 
 let invalid_method () =
-  Request.make ~meth:Endpoint.POST ~path:"/users/42" ()
+  Request.make ~method_:Endpoint.POST ~path:"/users/42" ()
   |> Validate.request get_user
   |> expect_error
 
 let invalid_path () =
-  Request.make ~meth:Endpoint.GET ~path:"/accounts/42" ()
+  Request.make ~method_:Endpoint.GET ~path:"/accounts/42" ()
   |> Validate.request get_user
   |> expect_error
 
 let bad_path_param_type () =
-  Request.make ~meth:Endpoint.GET ~path:"/users/not-an-int" ()
+  Request.make ~method_:Endpoint.GET ~path:"/users/not-an-int" ()
   |> Validate.request get_user
   |> expect_error
 
 let bad_query_param_type () =
-  Request.make ~meth:Endpoint.GET ~path:"/users/42"
+  Request.make ~method_:Endpoint.GET ~path:"/users/42"
     ~query:[ ("include_deleted", "no") ]
     ()
   |> Validate.request get_user
@@ -91,13 +97,13 @@ let bad_query_param_type () =
 
 let valid_post_body () =
   let body = `Assoc [ ("email", `String "a@example.test") ] in
-  Request.make ~meth:Endpoint.POST ~path:"/users" ~body ()
+  Request.make ~method_:Endpoint.POST ~path:"/users" ~body ()
   |> Validate.request post_user
   |> expect_valid
   |> ignore
 
 let missing_post_body () =
-  Request.make ~meth:Endpoint.POST ~path:"/users" ()
+  Request.make ~method_:Endpoint.POST ~path:"/users" ()
   |> Validate.request post_user
   |> expect_error
 

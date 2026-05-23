@@ -1,3 +1,4 @@
 (library
  (name contract)
+ (public_name contract)
  (libraries yojson))

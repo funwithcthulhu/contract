@@ -13,6 +13,12 @@ type create_user = {
 
 let ( let* ) = Result.bind
 
+let endpoint_or_exit = function
+  | Ok endpoint -> endpoint
+  | Error error ->
+      prerr_endline (Error.to_string error);
+      exit 1
+
 let assoc_with_optional_name fields = function
   | None -> `Assoc fields
   | Some name -> `Assoc (fields @ [ ("name", `String name) ])
@@ -61,14 +67,16 @@ let create_user_codec =
 
 let get_user =
   Endpoint.get ~summary:"Fetch a user" ~operation_id:"getUser" "/users/:id"
-  |> Endpoint.path_param "id" Codec.int
-  |> Endpoint.query_param "include_deleted" Codec.bool
-  |> Endpoint.response ~status:200 user_codec
+  |> Result.map (Endpoint.path_param "id" Codec.int)
+  |> Result.map (Endpoint.query_param "include_deleted" Codec.bool)
+  |> Result.map (Endpoint.response ~status:200 user_codec)
+  |> endpoint_or_exit
 
 let create_user =
   Endpoint.post ~summary:"Create a user" ~operation_id:"createUser" "/users"
-  |> Endpoint.body create_user_codec
-  |> Endpoint.response ~status:201 user_codec
+  |> Result.map (Endpoint.body create_user_codec)
+  |> Result.map (Endpoint.response ~status:201 user_codec)
+  |> endpoint_or_exit
 
 let api : Openapi.api =
   {

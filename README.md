@@ -1,6 +1,6 @@
-# ocaml-contract
+# contract
 
-`ocaml-contract` is an OCaml library for describing HTTP API contracts as typed values. The current code covers a small pure core: endpoint definitions, path matching, scalar and JSON decoding, request validation, and OpenAPI output.
+`contract` is an OCaml library for describing HTTP API contracts as typed values. The current code covers a small pure core: endpoint definitions, path matching, scalar and JSON decoding, request validation, and OpenAPI output.
 
 ## Current MVP
 
