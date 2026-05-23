@@ -18,16 +18,19 @@ let required_query_missing name =
 let path_param_missing name =
   Error.make ~location:(Error.Path_param name) "missing path parameter"
 
+let first_value name values =
+  List.assoc_opt name values
+
 let validate_param path_values query_values = function
   | Endpoint.Path_param (name, codec) -> (
-      match List.assoc_opt name path_values with
+      match first_value name path_values with
       | None -> Some (path_param_missing name)
       | Some value -> (
           match decode_scalar (Error.Path_param name) codec value with
           | Ok _ -> None
           | Error error -> Some error))
   | Endpoint.Query_param (name, required, codec) -> (
-      match List.assoc_opt name query_values with
+      match first_value name query_values with
       | None when required -> Some (required_query_missing name)
       | None -> None
       | Some value -> (
@@ -78,12 +81,12 @@ let request endpoint request =
         else Error errors
 
 let path validated name codec =
-  match List.assoc_opt name validated.path_values with
+  match first_value name validated.path_values with
   | None -> Error (path_param_missing name)
   | Some value -> decode_scalar (Error.Path_param name) codec value
 
 let query validated name codec =
-  match List.assoc_opt name validated.query_values with
+  match first_value name validated.query_values with
   | None -> Ok None
   | Some value -> (
       match decode_scalar (Error.Query_param name) codec value with

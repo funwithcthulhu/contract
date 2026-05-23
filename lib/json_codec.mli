@@ -31,7 +31,7 @@ val option : 'a t -> 'a option t
 val list : 'a t -> 'a list t
 
 (** Decode a required field from a JSON object. Missing fields and non-object
-    values return [Error]. *)
+    values return [Error]. Unrelated object fields are ignored. *)
 val required_field :
   string ->
   'a t ->
@@ -39,7 +39,7 @@ val required_field :
   ('a, Error.t) result
 
 (** Decode an optional field from a JSON object. Missing fields and JSON [null]
-    both return [Ok None]. *)
+    both return [Ok None]. Unrelated object fields are ignored. *)
 val optional_field :
   string ->
   'a t ->

@@ -10,7 +10,11 @@ type validated = {
 (** Validate method, route, declared parameters, and request body.
 
     Undeclared query parameters and request bodies on body-less endpoints are
-    ignored for now. *)
+    ignored. If a query parameter appears more than once, validation and
+    decoding use the first matching value. Declared path parameters must be
+    present in the matched template values; declaring a path parameter that is
+    not present in the template is a validation error. Body field strictness is
+    controlled by the JSON codec. *)
 val request :
   Endpoint.t ->
   Request.t ->
@@ -24,7 +28,7 @@ val path :
   ('a, Error.t) result
 
 (** Decode a query parameter from a validated request. Missing parameters return
-    [Ok None]. *)
+    [Ok None]. Duplicate parameters use the first matching value. *)
 val query :
   validated ->
   string ->
