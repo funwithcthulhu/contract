@@ -1,6 +1,7 @@
 (lang dune 3.11)
 
 (name contract)
+(version 0.1.0)
 
 (package
  (name contract)

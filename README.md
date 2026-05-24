@@ -26,14 +26,13 @@ Current limitations:
 - no OpenAPI import yet
 - no mock server yet
 - no response validation yet
-- no percent-decoding yet
 
 Short roadmap:
 
-- stabilize core API
-- refine public signatures
+- prepare the 0.1.0 release
+- improve OpenAPI support
+- add response validation
 - add Dream adapter
 - add Eio/Cohttp client
 - add mock server
 - add contract tests
-- improve OpenAPI support

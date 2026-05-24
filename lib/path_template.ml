@@ -13,6 +13,9 @@ let segments template = template.segments
 let route_error ?got message =
   Error (Error.make ?got ~location:Error.Route message)
 
+let path_param_error name ?expected ?got message =
+  Error (Error.make ?expected ?got ~location:(Error.Path_param name) message)
+
 let split_path path =
   if String.length path = 0 || path.[0] <> '/' then
     Error (Error.make ~location:Error.Route ~got:path "path must start with /")
@@ -45,6 +48,43 @@ let parse raw =
       in
       parse_all [] parts
 
+let is_hex = function
+  | '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' -> true
+  | _ -> false
+
+let hex_value = function
+  | '0' .. '9' as ch -> Char.code ch - Char.code '0'
+  | 'a' .. 'f' as ch -> 10 + Char.code ch - Char.code 'a'
+  | 'A' .. 'F' as ch -> 10 + Char.code ch - Char.code 'A'
+  | _ -> invalid_arg "hex_value"
+
+let percent_decode_param name value =
+  let length = String.length value in
+  let buffer = Buffer.create length in
+  let rec decode_at index =
+    if index = length then Ok (Buffer.contents buffer)
+    else
+      match value.[index] with
+      | '%' ->
+          if
+            index + 2 >= length
+            || (not (is_hex value.[index + 1]))
+            || not (is_hex value.[index + 2])
+          then
+            path_param_error name ~expected:"%HH" ~got:value
+              "malformed percent escape"
+          else (
+            let code =
+              (hex_value value.[index + 1] * 16) + hex_value value.[index + 2]
+            in
+            Buffer.add_char buffer (Char.chr code);
+            decode_at (index + 3))
+      | ch ->
+          Buffer.add_char buffer ch;
+          decode_at (index + 1)
+  in
+  decode_at 0
+
 let match_path template path =
   let rec match_segments params segments parts =
     match (segments, parts) with
@@ -52,8 +92,11 @@ let match_path template path =
     | Static expected :: rest_segments, got :: rest_parts
       when String.equal expected got ->
         match_segments params rest_segments rest_parts
-    | Param name :: rest_segments, got :: rest_parts ->
-        match_segments ((name, got) :: params) rest_segments rest_parts
+    | Param name :: rest_segments, got :: rest_parts -> (
+        match percent_decode_param name got with
+        | Ok value ->
+            match_segments ((name, value) :: params) rest_segments rest_parts
+        | Error error -> Error error)
     | _ -> route_error ~got:path "path does not match route"
   in
   match split_path path with

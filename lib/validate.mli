@@ -2,6 +2,7 @@
 
 type validated = {
   endpoint : Endpoint.t;
+  (** Percent-decoded values captured from the matched path template. *)
   path_values : (string * string) list;
   query_values : (string * string) list;
   body : Yojson.Safe.t option;
