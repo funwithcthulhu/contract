@@ -17,7 +17,8 @@ val segments : t -> segment list
 
     Parameter values are percent-decoded after segment matching. Encoded slashes
     such as [%2F] therefore remain inside the parameter value; literal slashes
-    still separate path segments. Static path segments are matched literally. *)
+    still separate path segments. Static path segments are matched literally.
+    Malformed percent escapes and invalid UTF-8 parameter values return [Error]. *)
 val match_path : t -> string -> ((string * string) list, Error.t) result
 
 val to_openapi_path : t -> string

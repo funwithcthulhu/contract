@@ -58,11 +58,67 @@ let hex_value = function
   | 'A' .. 'F' as ch -> 10 + Char.code ch - Char.code 'A'
   | _ -> invalid_arg "hex_value"
 
+let is_valid_utf8 value =
+  let length = String.length value in
+  let byte index = Char.code value.[index] in
+  let byte_in_range index low high =
+    index < length
+    && let value = byte index in
+       value >= low && value <= high
+  in
+  let continuation index = byte_in_range index 0x80 0xbf in
+  let rec valid_at index =
+    if index = length then true
+    else
+      let first = byte index in
+      if first <= 0x7f then valid_at (index + 1)
+      else if first >= 0xc2 && first <= 0xdf then
+        continuation (index + 1) && valid_at (index + 2)
+      else if first = 0xe0 then
+        byte_in_range (index + 1) 0xa0 0xbf
+        && continuation (index + 2)
+        && valid_at (index + 3)
+      else if first >= 0xe1 && first <= 0xec then
+        continuation (index + 1)
+        && continuation (index + 2)
+        && valid_at (index + 3)
+      else if first = 0xed then
+        byte_in_range (index + 1) 0x80 0x9f
+        && continuation (index + 2)
+        && valid_at (index + 3)
+      else if first >= 0xee && first <= 0xef then
+        continuation (index + 1)
+        && continuation (index + 2)
+        && valid_at (index + 3)
+      else if first = 0xf0 then
+        byte_in_range (index + 1) 0x90 0xbf
+        && continuation (index + 2)
+        && continuation (index + 3)
+        && valid_at (index + 4)
+      else if first >= 0xf1 && first <= 0xf3 then
+        continuation (index + 1)
+        && continuation (index + 2)
+        && continuation (index + 3)
+        && valid_at (index + 4)
+      else if first = 0xf4 then
+        byte_in_range (index + 1) 0x80 0x8f
+        && continuation (index + 2)
+        && continuation (index + 3)
+        && valid_at (index + 4)
+      else false
+  in
+  valid_at 0
+
 let percent_decode_param name value =
   let length = String.length value in
   let buffer = Buffer.create length in
   let rec decode_at index =
-    if index = length then Ok (Buffer.contents buffer)
+    if index = length then
+      let decoded = Buffer.contents buffer in
+      if is_valid_utf8 decoded then Ok decoded
+      else
+        path_param_error name ~expected:"valid UTF-8" ~got:value
+          "invalid UTF-8 path parameter"
     else
       match value.[index] with
       | '%' ->
