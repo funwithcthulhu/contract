@@ -5,6 +5,7 @@
 ## Current MVP
 
 This version is a thin vertical slice for REST-style JSON APIs. It has no HTTP server dependency. A request is just a value passed to the validator.
+Path parameters are percent-decoded after route matching.
 
 See `examples/users_api.ml` for a small users API with `GET /users/:id` and `POST /users`.
 
@@ -29,7 +30,6 @@ Current limitations:
 
 Short roadmap:
 
-- prepare the 0.1.0 release
 - improve OpenAPI support
 - add response validation
 - add Dream adapter
