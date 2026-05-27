@@ -1,5 +1,10 @@
 # Changes
 
+## 0.2.0 - Unreleased
+
+- Add pure response validation for declared status codes and JSON response
+  bodies.
+
 ## 0.1.0 - 2026-05-24
 
 Initial release of the pure OCaml contract core.

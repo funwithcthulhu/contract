@@ -61,8 +61,7 @@ val body : 'a Json_codec.t -> t -> t
 (** Declare a JSON request body. *)
 
 val response : status:int -> 'a Json_codec.t -> t -> t
-(** Declare a JSON response body for [status]. Response bodies are not validated
-    by the current core validator. *)
+(** Declare a JSON response body for [status]. *)
 
 val empty_response : status:int -> t -> t
 val method_to_string : method_ -> string

@@ -7,5 +7,6 @@
   test_endpoint
   test_json_codec
   test_validate
+  test_response
   test_openapi)
  (libraries alcotest contract yojson))

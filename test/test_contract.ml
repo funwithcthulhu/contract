@@ -6,5 +6,6 @@ let () =
       Test_endpoint.tests;
       Test_json_codec.tests;
       Test_validate.tests;
+      Test_response.tests;
       Test_openapi.tests;
     ]

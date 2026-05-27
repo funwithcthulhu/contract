@@ -1,5 +1,6 @@
 type location =
   | Method
+  | Status
   | Route
   | Path_param of string
   | Query_param of string
@@ -17,6 +18,7 @@ let make ?expected ?got ~location message = { location; message; expected; got }
 
 let location_to_string = function
   | Method -> "method"
+  | Status -> "status"
   | Route -> "route"
   | Path_param name -> "path parameter " ^ name
   | Query_param name -> "query parameter " ^ name

@@ -5,6 +5,16 @@ type validated = {
   body : Yojson.Safe.t option;
 }
 
+type validated_response = {
+  endpoint : Endpoint.t;
+  status : int;
+  body : Yojson.Safe.t option;
+}
+
+type response_body =
+  | No_body
+  | Json_body : 'a Json_codec.t -> response_body
+
 let retag location = function
   | Ok value -> Ok value
   | Error error -> Error { error with Error.location }
@@ -44,6 +54,45 @@ let validate_body endpoint_body request_body =
   | Some _, None ->
       Some (Error.make ~location:Error.Body "missing request body")
   | Some (Endpoint.Body codec), Some json -> (
+      match codec.Json_codec.decode json with
+      | Ok _ -> None
+      | Error error -> Some error)
+
+let status_to_string status = string_of_int status
+
+let response_statuses endpoint =
+  List.map
+    (fun (Endpoint.Response (status, _)) -> status_to_string status)
+    endpoint.Endpoint.responses
+
+let response_for_status endpoint status =
+  List.find_map
+    (fun (Endpoint.Response (declared_status, body)) ->
+      if declared_status = status then
+        Some
+          (match body with
+          | None -> No_body
+          | Some codec -> Json_body codec)
+      else None)
+    endpoint.Endpoint.responses
+
+let unexpected_status endpoint response =
+  let expected =
+    match response_statuses endpoint with
+    | [] -> None
+    | statuses -> Some (String.concat ", " statuses)
+  in
+  Error.make ?expected ~got:(status_to_string response.Response.status)
+    ~location:Error.Status "unexpected response status"
+
+let validate_response_body expected_body response_body =
+  match (expected_body, response_body) with
+  | No_body, None -> None
+  | No_body, Some _ ->
+      Some (Error.make ~location:Error.Body "unexpected response body")
+  | Json_body _, None ->
+      Some (Error.make ~location:Error.Body "missing response body")
+  | Json_body codec, Some json -> (
       match codec.Json_codec.decode json with
       | Ok _ -> None
       | Error error -> Some error)
@@ -94,10 +143,24 @@ let query validated name codec =
       | Ok value -> Ok (Some value)
       | Error error -> Error error)
 
-let body validated codec =
+let body (validated : validated) codec =
   match validated.body with
   | None -> Ok None
   | Some json -> (
       match codec.Json_codec.decode json with
       | Ok value -> Ok (Some value)
       | Error error -> Error error)
+
+let response endpoint (response : Response.t) =
+  match response_for_status endpoint response.status with
+  | None -> Error [ unexpected_status endpoint response ]
+  | Some expected_body -> (
+      match validate_response_body expected_body response.body with
+      | None ->
+          Ok
+            {
+              endpoint;
+              status = response.status;
+              body = response.body;
+            }
+      | Some error -> Error [ error ])
