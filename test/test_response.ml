@@ -31,13 +31,18 @@ let expect_error_location expected = function
 let valid_json_body () =
   let response = Response.make ~status:200 ~body:(`String "alice") () in
   let validated = Validate.response user_response response |> expect_valid in
-  Alcotest.(check int) "status" 200 validated.status
+  Alcotest.(check int) "status" 200 validated.status;
+  match Validate.response_body validated Json_codec.string with
+  | Ok body -> Alcotest.(check (option string)) "body" (Some "alice") body
+  | Error error -> Alcotest.fail (Error.to_string error)
 
 let valid_empty_body () =
-  Response.make ~status:404 ()
-  |> Validate.response user_response
-  |> expect_valid
-  |> ignore
+  let validated =
+    Response.make ~status:404 () |> Validate.response user_response |> expect_valid
+  in
+  match Validate.response_body validated Json_codec.string with
+  | Ok body -> Alcotest.(check (option string)) "body" None body
+  | Error error -> Alcotest.fail (Error.to_string error)
 
 let unexpected_status () =
   Response.make ~status:500 ()

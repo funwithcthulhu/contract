@@ -143,13 +143,19 @@ let query validated name codec =
       | Ok value -> Ok (Some value)
       | Error error -> Error error)
 
-let body (validated : validated) codec =
-  match validated.body with
+let decode_optional_json body codec =
+  match body with
   | None -> Ok None
   | Some json -> (
       match codec.Json_codec.decode json with
       | Ok value -> Ok (Some value)
       | Error error -> Error error)
+
+let body (validated : validated) codec =
+  decode_optional_json validated.body codec
+
+let response_body (validated : validated_response) codec =
+  decode_optional_json validated.body codec
 
 let response endpoint (response : Response.t) =
   match response_for_status endpoint response.status with
