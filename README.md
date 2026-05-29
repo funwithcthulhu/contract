@@ -26,9 +26,9 @@ dune exec examples/users_api.exe
 Development:
 
 ```sh
-dune fmt
 dune build @all
 dune runtest
+dune fmt
 ```
 
 Current limitations:

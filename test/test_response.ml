@@ -27,6 +27,26 @@ let expect_error_location expected = function
   | Error (error :: _) ->
       Alcotest.(check bool) "location" true (error.Error.location = expected)
 
+let expect_error expected = function
+  | Ok _ -> Alcotest.fail "expected response validation to fail"
+  | Error [] -> Alcotest.fail "expected at least one validation error"
+  | Error (error :: _) ->
+      Alcotest.(check bool)
+        "location" true
+        (error.Error.location = expected.Error.location);
+      Alcotest.(check string) "message" expected.message error.message;
+      Alcotest.(check (option string))
+        "expected" expected.expected error.expected;
+      Alcotest.(check (option string)) "got" expected.got error.got
+
+let response_encode_succeeds () =
+  let body = Json_codec.string.encode "alice" in
+  let response = Response.make ~status:200 ~body () in
+  let validated = Validate.response user_response response |> expect_valid in
+  match Validate.response_body validated Json_codec.string with
+  | Ok body -> Alcotest.(check (option string)) "body" (Some "alice") body
+  | Error error -> Alcotest.fail (Error.to_string error)
+
 let valid_json_body () =
   let response = Response.make ~status:200 ~body:(`String "alice") () in
   let validated = Validate.response user_response response |> expect_valid in
@@ -48,7 +68,9 @@ let valid_empty_body () =
 let unexpected_status () =
   Response.make ~status:500 ()
   |> Validate.response user_response
-  |> expect_error_location Error.Status
+  |> expect_error
+       (Error.make ~location:Error.Status ~expected:"200, 404" ~got:"500"
+          "unexpected response status")
 
 let missing_body () =
   Response.make ~status:200 ()
@@ -68,6 +90,8 @@ let unexpected_body () =
 let tests =
   ( "response validation",
     [
+      Alcotest.test_case "response encode succeeds" `Quick
+        response_encode_succeeds;
       Alcotest.test_case "valid JSON body" `Quick valid_json_body;
       Alcotest.test_case "valid empty body" `Quick valid_empty_body;
       Alcotest.test_case "unexpected status" `Quick unexpected_status;
