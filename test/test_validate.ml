@@ -88,6 +88,30 @@ let expect_error_string expected = function
   | Error (error :: _) ->
       Alcotest.(check string) "error" expected (Error.to_string error)
 
+let contains_substring haystack needle =
+  let haystack_length = String.length haystack in
+  let needle_length = String.length needle in
+  let rec matches_at index offset =
+    offset = needle_length
+    || haystack.[index + offset] = needle.[offset]
+       && matches_at index (offset + 1)
+  in
+  let rec search index =
+    index + needle_length <= haystack_length
+    && (matches_at index 0 || search (index + 1))
+  in
+  needle_length = 0 || search 0
+
+let expect_error_string_without forbidden expected = function
+  | Ok _ -> Alcotest.fail "expected validation to fail"
+  | Error [] -> Alcotest.fail "expected at least one validation error"
+  | Error (error :: _) ->
+      let rendered = Error.to_string error in
+      Alcotest.(check string) "error" expected rendered;
+      Alcotest.(check bool)
+        "omits raw body content" false
+        (contains_substring rendered forbidden)
+
 let valid_get () =
   let request =
     Request.make ~method_:Endpoint.GET ~path:"/users/42"
@@ -152,14 +176,19 @@ let invalid_path () =
 
 let bad_path_param_type () =
   Request.make ~method_:Endpoint.GET ~path:"/users/not-an-int" ()
-  |> Validate.request get_user |> expect_error
+  |> Validate.request get_user
+  |> expect_error_string
+       "path parameter id: expected integer (expected: integer, got: \
+        not-an-int)"
 
 let bad_query_param_type () =
   Request.make ~method_:Endpoint.GET ~path:"/users/42"
     ~query:[ ("include_deleted", "no") ]
     ()
   |> Validate.request get_user
-  |> expect_error_location (Error.Query_param "include_deleted")
+  |> expect_error_string
+       "query parameter include_deleted: expected boolean (expected: boolean, \
+        got: no)"
 
 let required_query_param_missing () =
   Request.make ~method_:Endpoint.GET ~path:"/users/42" ()
@@ -201,10 +230,13 @@ let valid_post_body () =
   | Error error -> Alcotest.fail (Error.to_string error)
 
 let invalid_json_body_field () =
-  let body = `Assoc [ ("email", `Int 1) ] in
+  let body =
+    `Assoc
+      [ ("email", `Int 1); ("name", `String "super-secret-raw-body-marker") ]
+  in
   Request.make ~method_:Endpoint.POST ~path:"/users" ~body ()
   |> Validate.request post_user
-  |> expect_error_string
+  |> expect_error_string_without "super-secret-raw-body-marker"
        "json field email: expected string (expected: string, got: integer)"
 
 let extra_json_body_fields_are_ignored () =
