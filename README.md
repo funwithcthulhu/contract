@@ -8,11 +8,11 @@
 
 ## Current MVP
 
-This version is a thin vertical slice for REST-style JSON APIs. It has no HTTP server dependency.
+The current source tree is a thin vertical slice for REST-style JSON APIs. It has no HTTP server dependency.
 A request is a value passed to the validator; a response is a status plus optional JSON body checked against the endpoint's declared responses.
 Path parameters are percent-decoded after route matching.
 
-Install:
+Released package:
 
 ```sh
 opam install contract
