@@ -15,6 +15,22 @@ let rejects template path =
   | Ok _ -> Alcotest.fail "expected path match to fail"
   | Error _ -> ()
 
+let rejects_route ~message ?got path =
+  match Path_template.parse path with
+  | Ok _ -> Alcotest.fail "expected route parse to fail"
+  | Error error ->
+      Alcotest.(check bool) "location" true (error.Error.location = Error.Route);
+      Alcotest.(check string) "message" message error.message;
+      Alcotest.(check (option string)) "got" got error.got
+
+let rejects_match_route ~message ?got template path =
+  match Path_template.match_path template path with
+  | Ok _ -> Alcotest.fail "expected path match to fail"
+  | Error error ->
+      Alcotest.(check bool) "location" true (error.Error.location = Error.Route);
+      Alcotest.(check string) "message" message error.message;
+      Alcotest.(check (option string)) "got" got error.got
+
 let rejects_path_param ~message ?expected ?got template path =
   match Path_template.match_path template path with
   | Ok _ -> Alcotest.fail "expected path match to fail"
@@ -51,6 +67,13 @@ let encoded_slash_stays_inside_path_param () =
     [ ("path", "a/b") ]
     (matches_exn template "/files/a%2Fb")
 
+let users_id_accepts_encoded_slash_as_value () =
+  let template = parse_exn "/users/:id" in
+  Alcotest.(check (list (pair string string)))
+    "params"
+    [ ("id", "a/b") ]
+    (matches_exn template "/users/a%2Fb")
+
 let decodes_lowercase_and_uppercase_hex () =
   let template = parse_exn "/users/:id" in
   Alcotest.(check (list (pair string string)))
@@ -78,6 +101,11 @@ let rejects_non_hex_percent_escape () =
   rejects_path_param ~message:"malformed percent escape" ~expected:"%HH"
     ~got:"alice%G0" template "/users/alice%G0"
 
+let rejects_percent_zz_escape () =
+  let template = parse_exn "/users/:id" in
+  rejects_path_param ~message:"malformed percent escape" ~expected:"%HH"
+    ~got:"a%zz" template "/users/a%zz"
+
 let rejects_invalid_utf8_percent_sequence () =
   let template = parse_exn "/users/:id" in
   rejects_path_param ~message:"invalid UTF-8 path parameter"
@@ -88,6 +116,14 @@ let rejects_short_path () =
 
 let rejects_long_path () =
   parse_exn "/users/:id" |> fun template -> rejects template "/users/42/posts"
+
+let rejects_trailing_slash () =
+  let template = parse_exn "/users/:id" in
+  rejects_match_route ~message:"empty path segment" ~got:"/users/42/" template
+    "/users/42/"
+
+let rejects_duplicate_path_parameter_names () =
+  rejects_route ~message:"duplicate path parameter: id" "/users/:id/posts/:id"
 
 let converts_to_openapi_path () =
   let template = parse_exn "/users/:id" in
@@ -104,6 +140,8 @@ let tests =
         decodes_percent_encoded_space;
       Alcotest.test_case "decodes %2F inside path param" `Quick
         encoded_slash_stays_inside_path_param;
+      Alcotest.test_case "users id accepts encoded slash as value" `Quick
+        users_id_accepts_encoded_slash_as_value;
       Alcotest.test_case "decodes lowercase and uppercase hex" `Quick
         decodes_lowercase_and_uppercase_hex;
       Alcotest.test_case "literal slash still splits path segments" `Quick
@@ -113,10 +151,15 @@ let tests =
       Alcotest.test_case "rejects percent at end" `Quick rejects_percent_at_end;
       Alcotest.test_case "rejects non-hex percent escape" `Quick
         rejects_non_hex_percent_escape;
+      Alcotest.test_case "rejects %zz percent escape" `Quick
+        rejects_percent_zz_escape;
       Alcotest.test_case "rejects invalid UTF-8 percent sequence" `Quick
         rejects_invalid_utf8_percent_sequence;
       Alcotest.test_case "rejects missing segment" `Quick rejects_short_path;
       Alcotest.test_case "rejects extra segment" `Quick rejects_long_path;
+      Alcotest.test_case "rejects trailing slash" `Quick rejects_trailing_slash;
+      Alcotest.test_case "rejects duplicate path parameter names" `Quick
+        rejects_duplicate_path_parameter_names;
       Alcotest.test_case "converts to OpenAPI path" `Quick
         converts_to_openapi_path;
     ] )

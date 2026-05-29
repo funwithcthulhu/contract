@@ -33,14 +33,18 @@ let parse raw =
   match split_path raw with
   | Error error -> Error error
   | Ok parts ->
-      let rec parse_all acc = function
+      let rec parse_all seen acc = function
         | [] -> Ok { raw; segments = List.rev acc }
         | part :: rest -> (
             match parse_segment part with
-            | Ok segment -> parse_all (segment :: acc) rest
+            | Ok (Param name as segment) ->
+                if List.mem name seen then
+                  route_error ("duplicate path parameter: " ^ name)
+                else parse_all (name :: seen) (segment :: acc) rest
+            | Ok segment -> parse_all seen (segment :: acc) rest
             | Error error -> Error error)
       in
-      parse_all [] parts
+      parse_all [] [] parts
 
 let is_hex = function
   | '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' -> true
