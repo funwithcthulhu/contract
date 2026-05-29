@@ -5,6 +5,8 @@
 - Add pure response validation for declared status codes and JSON response
   bodies.
 - Add a helper for decoding validated response bodies.
+- Tighten response-validation tests for declared statuses and response body
+  errors.
 
 ## 0.1.0 - 2026-05-24
 
