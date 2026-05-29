@@ -1,0 +1,62 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Invoices API",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/invoices/{invoice_id}": {
+      "get": {
+        "summary": "Fetch invoice status",
+        "operationId": "getInvoiceStatus",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "include_voided",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "paid",
+                        "void"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

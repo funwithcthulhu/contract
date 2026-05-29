@@ -16,6 +16,19 @@ let create_user_codec =
     ~decode:(fun _ -> Ok ())
     ()
 
+let invoice_status_codec =
+  let schema =
+    Schema.obj
+      [
+        ("id", Schema.integer, true);
+        ("status", Schema.enum [ "open"; "paid"; "void" ], true);
+      ]
+  in
+  Json_codec.make ~name:"InvoiceStatus" ~schema
+    ~encode:(fun () -> `Assoc [])
+    ~decode:(fun _ -> Ok ())
+    ()
+
 let expect_endpoint = function
   | Ok endpoint -> endpoint
   | Error error -> Alcotest.fail (Error.to_string error)
@@ -44,11 +57,26 @@ let create_session =
   |> Result.map (Endpoint.response ~status:201 user_codec)
   |> expect_endpoint
 
+let get_invoice_status =
+  Endpoint.get ~summary:"Fetch invoice status" ~operation_id:"getInvoiceStatus"
+    "/invoices/:invoice_id"
+  |> Result.map (Endpoint.path_param "invoice_id" Codec.int)
+  |> Result.map (Endpoint.query_param "include_voided" Codec.bool)
+  |> Result.map (Endpoint.response ~status:200 invoice_status_codec)
+  |> expect_endpoint
+
 let api : Openapi.api =
   {
     title = "Users API";
     version = "0.2.0";
     endpoints = [ get_user; post_user ];
+  }
+
+let invoices_api : Openapi.api =
+  {
+    title = "Invoices API";
+    version = "0.2.0";
+    endpoints = [ get_invoice_status ];
   }
 
 let member name = function
@@ -198,6 +226,20 @@ let output_is_deterministic () =
   Alcotest.(check string)
     "openapi" (Openapi.to_string api) (Openapi.to_string api)
 
+let output_matches_invoice_fixture () =
+  let expected = Yojson.Safe.from_file "fixtures/openapi_invoices_api.json" in
+  let actual = Openapi.to_yojson invoices_api in
+  Alcotest.(check string)
+    "openapi fixture"
+    (Yojson.Safe.to_string expected)
+    (Yojson.Safe.to_string actual)
+
+let invoice_fixture_output_is_deterministic () =
+  Alcotest.(check string)
+    "invoice openapi"
+    (Openapi.to_string invoices_api)
+    (Openapi.to_string invoices_api)
+
 let output_escapes_strings () =
   let endpoint =
     Endpoint.get ~summary:"Fetch \"quoted\" user" "/quoted/:id"
@@ -252,6 +294,10 @@ let tests =
         output_contains_parameters;
       Alcotest.test_case "output is deterministic" `Quick
         output_is_deterministic;
+      Alcotest.test_case "matches invoice fixture" `Quick
+        output_matches_invoice_fixture;
+      Alcotest.test_case "invoice fixture output is deterministic" `Quick
+        invoice_fixture_output_is_deterministic;
       Alcotest.test_case "escapes strings" `Quick output_escapes_strings;
       Alcotest.test_case "empty API has empty paths" `Quick
         empty_api_has_empty_paths;
