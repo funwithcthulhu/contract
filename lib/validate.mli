@@ -8,6 +8,12 @@ type validated = {
   body : Yojson.Safe.t option;
 }
 
+type validated_response = {
+  endpoint : Endpoint.t;
+  status : int;
+  body : Yojson.Safe.t option;
+}
+
 val request : Endpoint.t -> Request.t -> (validated, Error.t list) result
 (** Validate method, route, declared parameters, and request body.
 
@@ -28,3 +34,19 @@ val query : validated -> string -> 'a Codec.t -> ('a option, Error.t) result
 val body : validated -> 'a Json_codec.t -> ('a option, Error.t) result
 (** Decode the JSON body from a validated request. Missing bodies return
     [Ok None]. *)
+
+val response :
+  Endpoint.t -> Response.t -> (validated_response, Error.t list) result
+(** Validate a pure response against the endpoint's declared responses.
+
+    The status must match a declared response. If that response declares a JSON
+    body, the body must be present and decode with its codec. If it declares an
+    empty response, a present body is rejected. Duplicate response status
+    declarations use the first matching declaration. *)
+
+val response_body :
+  validated_response -> 'a Json_codec.t -> ('a option, Error.t) result
+(** Decode the JSON body from a validated response. Missing bodies return
+    [Ok None]. The caller supplies the codec because successful response
+    validation preserves the response as JSON, not as an existential decoded
+    value. *)

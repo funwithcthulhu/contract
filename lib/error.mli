@@ -2,6 +2,7 @@
 
 type location =
   | Method
+  | Status
   | Route
   | Path_param of string
   | Query_param of string

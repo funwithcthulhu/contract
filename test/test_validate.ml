@@ -69,6 +69,12 @@ let expect_error_location expected = function
   | Error (error :: _) ->
       Alcotest.(check bool) "location" true (error.Error.location = expected)
 
+let expect_error_string expected = function
+  | Ok _ -> Alcotest.fail "expected validation to fail"
+  | Error [] -> Alcotest.fail "expected at least one validation error"
+  | Error (error :: _) ->
+      Alcotest.(check string) "error" expected (Error.to_string error)
+
 let valid_get () =
   let request =
     Request.make ~method_:Endpoint.GET ~path:"/users/42"
@@ -84,6 +90,14 @@ let valid_get () =
   | Ok include_deleted ->
       Alcotest.(check (option bool))
         "include_deleted" (Some false) include_deleted
+  | Error error -> Alcotest.fail (Error.to_string error)
+
+let optional_query_missing_decodes_none () =
+  let request = Request.make ~method_:Endpoint.GET ~path:"/users/42" () in
+  let validated = Validate.request get_user request |> expect_valid in
+  match Validate.query validated "include_deleted" Codec.bool with
+  | Ok include_deleted ->
+      Alcotest.(check (option bool)) "include_deleted" None include_deleted
   | Error error -> Alcotest.fail (Error.to_string error)
 
 let undeclared_query_is_ignored () =
@@ -107,7 +121,9 @@ let duplicate_query_uses_first_value () =
 
 let invalid_method () =
   Request.make ~method_:Endpoint.POST ~path:"/users/42" ()
-  |> Validate.request get_user |> expect_error
+  |> Validate.request get_user
+  |> expect_error_string
+       "method: HTTP method does not match (expected: GET, got: POST)"
 
 let invalid_path () =
   Request.make ~method_:Endpoint.GET ~path:"/accounts/42" ()
@@ -136,14 +152,23 @@ let declared_path_param_must_match_template () =
 
 let valid_post_body () =
   let body = `Assoc [ ("email", `String "a@example.test") ] in
-  Request.make ~method_:Endpoint.POST ~path:"/users" ~body ()
-  |> Validate.request post_user |> expect_valid |> ignore
+  let validated =
+    Request.make ~method_:Endpoint.POST ~path:"/users" ~body ()
+    |> Validate.request post_user |> expect_valid
+  in
+  match Validate.body validated create_user_codec with
+  | Ok (Some create_user) ->
+      Alcotest.(check string) "email" "a@example.test" create_user.email;
+      Alcotest.(check (option string)) "name" None create_user.name
+  | Ok None -> Alcotest.fail "expected decoded request body"
+  | Error error -> Alcotest.fail (Error.to_string error)
 
 let invalid_json_body_field () =
   let body = `Assoc [ ("email", `Int 1) ] in
   Request.make ~method_:Endpoint.POST ~path:"/users" ~body ()
   |> Validate.request post_user
-  |> expect_error_location (Error.Json_field "email")
+  |> expect_error_string
+       "json field email: expected string (expected: string, got: integer)"
 
 let extra_json_body_fields_are_ignored () =
   let body =
@@ -168,6 +193,8 @@ let tests =
   ( "request validation",
     [
       Alcotest.test_case "valid GET" `Quick valid_get;
+      Alcotest.test_case "optional query missing decodes to None" `Quick
+        optional_query_missing_decodes_none;
       Alcotest.test_case "ignores undeclared query params" `Quick
         undeclared_query_is_ignored;
       Alcotest.test_case "duplicate query uses first value" `Quick

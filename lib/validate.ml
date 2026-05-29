@@ -5,6 +5,16 @@ type validated = {
   body : Yojson.Safe.t option;
 }
 
+type validated_response = {
+  endpoint : Endpoint.t;
+  status : int;
+  body : Yojson.Safe.t option;
+}
+
+type expected_response_body =
+  | No_body
+  | Json_body : 'a Json_codec.t -> expected_response_body
+
 let retag location = function
   | Ok value -> Ok value
   | Error error -> Error { error with Error.location }
@@ -20,6 +30,14 @@ let path_param_missing name =
   Error.make ~location:(Error.Path_param name) "missing path parameter"
 
 let first_value name values = List.assoc_opt name values
+
+let decode_optional_json body codec =
+  match body with
+  | None -> Ok None
+  | Some json -> (
+      match codec.Json_codec.decode json with
+      | Ok value -> Ok (Some value)
+      | Error error -> Error error)
 
 let validate_param path_values query_values = function
   | Endpoint.Path_param (name, codec) -> (
@@ -38,7 +56,7 @@ let validate_param path_values query_values = function
           | Ok _ -> None
           | Error error -> Some error))
 
-let validate_body endpoint_body request_body =
+let validate_request_body endpoint_body request_body =
   match (endpoint_body, request_body) with
   | None, _ -> None
   | Some _, None ->
@@ -66,7 +84,7 @@ let request endpoint request =
           |> List.filter_map (validate_param path_values request.query)
         in
         let body_errors =
-          match validate_body endpoint.body request.body with
+          match validate_request_body endpoint.body request.body with
           | None -> []
           | Some error -> [ error ]
         in
@@ -94,10 +112,55 @@ let query validated name codec =
       | Ok value -> Ok (Some value)
       | Error error -> Error error)
 
-let body validated codec =
-  match validated.body with
-  | None -> Ok None
-  | Some json -> (
+let body (validated : validated) codec =
+  decode_optional_json validated.body codec
+
+let status_to_string status = string_of_int status
+
+let expected_response_statuses endpoint =
+  List.map
+    (fun (Endpoint.Response (status, _)) -> status_to_string status)
+    endpoint.Endpoint.responses
+
+let expected_response_for_status endpoint status =
+  List.find_map
+    (fun (Endpoint.Response (declared_status, body)) ->
+      if declared_status = status then
+        Some (match body with None -> No_body | Some codec -> Json_body codec)
+      else None)
+    endpoint.Endpoint.responses
+
+let unexpected_response_status endpoint response =
+  let expected =
+    match expected_response_statuses endpoint with
+    | [] -> None
+    | statuses -> Some (String.concat ", " statuses)
+  in
+  Error.make ?expected
+    ~got:(status_to_string (Response.status response))
+    ~location:Error.Status "unexpected response status"
+
+let validate_response_body expected_body body =
+  match (expected_body, body) with
+  | No_body, None -> None
+  | No_body, Some _ ->
+      Some (Error.make ~location:Error.Body "unexpected response body")
+  | Json_body _, None ->
+      Some (Error.make ~location:Error.Body "missing response body")
+  | Json_body codec, Some json -> (
       match codec.Json_codec.decode json with
-      | Ok value -> Ok (Some value)
-      | Error error -> Error error)
+      | Ok _ -> None
+      | Error error -> Some error)
+
+let response endpoint (response : Response.t) =
+  let status = Response.status response in
+  let body = Response.body response in
+  match expected_response_for_status endpoint status with
+  | None -> Error [ unexpected_response_status endpoint response ]
+  | Some expected_body -> (
+      match validate_response_body expected_body body with
+      | None -> Ok { endpoint; status; body }
+      | Some error -> Error [ error ])
+
+let response_body (validated : validated_response) codec =
+  decode_optional_json validated.body codec
