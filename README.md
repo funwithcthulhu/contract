@@ -1,7 +1,7 @@
 # contract
 
 [![CI](https://github.com/funwithcthulhu/contract/actions/workflows/ci.yml/badge.svg)](https://github.com/funwithcthulhu/contract/actions)
-[![opam](https://img.shields.io/opam/v/contract.svg)](https://opam.ocaml.org/packages/contract/)
+[![opam](https://badgen.net/opam/v/contract)](https://opam.ocaml.org/packages/contract/)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 `contract` is an OCaml library for describing HTTP API contracts as typed values. The current code covers a small pure core: endpoint definitions, path matching, scalar and JSON decoding, request validation, and OpenAPI output.
