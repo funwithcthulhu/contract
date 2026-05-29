@@ -1,8 +1,29 @@
 open Contract
 
 type error_payload = { code : string; detail : string }
+type receipt = { receipt_id : int; amount : int }
 
 let ( let* ) = Result.bind
+
+let receipt_codec =
+  let schema =
+    Schema.obj
+      [ ("receipt_id", Schema.integer, true); ("amount", Schema.integer, true) ]
+  in
+  let encode receipt =
+    `Assoc
+      [
+        ("receipt_id", `Int receipt.receipt_id); ("amount", `Int receipt.amount);
+      ]
+  in
+  let decode json =
+    let* receipt_id =
+      Json_codec.required_field "receipt_id" Json_codec.int json
+    in
+    let* amount = Json_codec.required_field "amount" Json_codec.int json in
+    Ok { receipt_id; amount }
+  in
+  Json_codec.make ~name:"Receipt" ~schema ~encode ~decode ()
 
 let error_payload_codec =
   let schema =
@@ -33,6 +54,11 @@ let user_response =
 let create_response =
   Endpoint.post "/users"
   |> Result.map (Endpoint.response ~status:201 Json_codec.int)
+  |> expect_endpoint
+
+let create_invoice =
+  Endpoint.post "/invoices"
+  |> Result.map (Endpoint.response ~status:201 receipt_codec)
   |> expect_endpoint
 
 let create_payment =
@@ -127,12 +153,40 @@ let declared_422_response_decodes_error_payload () =
   | Ok None -> Alcotest.fail "expected decoded error payload"
   | Error error -> Alcotest.fail (Error.to_string error)
 
+let declared_201_response_accepts_receipt_shape () =
+  let body = `Assoc [ ("receipt_id", `Int 1001); ("amount", `Int 2500) ] in
+  let validated =
+    Response.make ~status:201 ~body ()
+    |> Validate.response create_invoice
+    |> expect_valid
+  in
+  match Validate.response_body validated receipt_codec with
+  | Ok (Some receipt) ->
+      Alcotest.(check int) "receipt_id" 1001 receipt.receipt_id;
+      Alcotest.(check int) "amount" 2500 receipt.amount
+  | Ok None -> Alcotest.fail "expected decoded receipt"
+  | Error error -> Alcotest.fail (Error.to_string error)
+
+let declared_201_response_rejects_wrong_receipt_shape () =
+  Response.make ~status:201
+    ~body:(`Assoc [ ("receipt_id", `String "1001"); ("amount", `Int 2500) ])
+    ()
+  |> Validate.response create_invoice
+  |> expect_error
+       (Error.make ~location:(Error.Json_field "receipt_id") ~expected:"integer"
+          ~got:"string" "expected integer")
+
 let valid_no_content_status () =
   Response.make ~status:204 ()
   |> Validate.response status_responses
   |> expect_valid |> ignore
 
-let unexpected_status () =
+let no_content_status_rejects_unexpected_body () =
+  Response.make ~status:204 ~body:(`Assoc []) ()
+  |> Validate.response status_responses
+  |> expect_error (Error.make ~location:Error.Body "unexpected response body")
+
+let unknown_500_status_reports_declared_statuses () =
   Response.make ~status:500 ()
   |> Validate.response user_response
   |> expect_error
@@ -186,9 +240,16 @@ let tests =
         declared_non_2xx_status_is_accepted;
       Alcotest.test_case "declared 422 response decodes error payload" `Quick
         declared_422_response_decodes_error_payload;
+      Alcotest.test_case "declared 201 response accepts receipt shape" `Quick
+        declared_201_response_accepts_receipt_shape;
+      Alcotest.test_case "declared 201 response rejects wrong receipt shape"
+        `Quick declared_201_response_rejects_wrong_receipt_shape;
       Alcotest.test_case "valid no-content status" `Quick
         valid_no_content_status;
-      Alcotest.test_case "unexpected status" `Quick unexpected_status;
+      Alcotest.test_case "no-content status rejects unexpected body" `Quick
+        no_content_status_rejects_unexpected_body;
+      Alcotest.test_case "unknown 500 status reports declared statuses" `Quick
+        unknown_500_status_reports_declared_statuses;
       Alcotest.test_case "undeclared 2xx status is rejected" `Quick
         undeclared_2xx_status_is_rejected;
       Alcotest.test_case "missing body" `Quick missing_body;
