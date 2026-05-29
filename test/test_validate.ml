@@ -41,6 +41,19 @@ let get_user_required_query =
   |> Result.map (Endpoint.response ~status:200 Json_codec.string)
   |> expect_endpoint
 
+let account_user =
+  Endpoint.get "/accounts/:account_id/users/:user_id"
+  |> Result.map (Endpoint.path_param "account_id" Codec.string)
+  |> Result.map (Endpoint.path_param "user_id" Codec.int)
+  |> Result.map (Endpoint.response ~status:200 Json_codec.string)
+  |> expect_endpoint
+
+let search_users =
+  Endpoint.get "/search"
+  |> Result.map (Endpoint.query_param ~required:true "limit" Codec.int)
+  |> Result.map (Endpoint.response ~status:200 Json_codec.string)
+  |> expect_endpoint
+
 let get_users_with_missing_path_value =
   Endpoint.get "/users"
   |> Result.map (Endpoint.path_param "id" Codec.int)
@@ -119,6 +132,14 @@ let duplicate_query_uses_first_value () =
         "include_deleted" (Some true) include_deleted
   | Error error -> Alcotest.fail (Error.to_string error)
 
+let duplicate_required_query_rejects_invalid_first_value () =
+  Request.make ~method_:Endpoint.GET ~path:"/search"
+    ~query:[ ("limit", "many"); ("limit", "25") ]
+    ()
+  |> Validate.request search_users
+  |> expect_error_string
+       "query parameter limit: expected integer (expected: integer, got: many)"
+
 let invalid_method () =
   Request.make ~method_:Endpoint.POST ~path:"/users/42" ()
   |> Validate.request get_user
@@ -149,6 +170,22 @@ let declared_path_param_must_match_template () =
   Request.make ~method_:Endpoint.GET ~path:"/users" ()
   |> Validate.request get_users_with_missing_path_value
   |> expect_error_location (Error.Path_param "id")
+
+let encoded_slash_stays_inside_account_id () =
+  let validated =
+    Request.make ~method_:Endpoint.GET ~path:"/accounts/acme%2Fnorth/users/42"
+      ()
+    |> Validate.request account_user
+    |> expect_valid
+  in
+  begin match Validate.path validated "account_id" Codec.string with
+  | Ok account_id ->
+      Alcotest.(check string) "account_id" "acme/north" account_id
+  | Error error -> Alcotest.fail (Error.to_string error)
+  end;
+  match Validate.path validated "user_id" Codec.int with
+  | Ok user_id -> Alcotest.(check int) "user_id" 42 user_id
+  | Error error -> Alcotest.fail (Error.to_string error)
 
 let valid_post_body () =
   let body = `Assoc [ ("email", `String "a@example.test") ] in
@@ -199,6 +236,8 @@ let tests =
         undeclared_query_is_ignored;
       Alcotest.test_case "duplicate query uses first value" `Quick
         duplicate_query_uses_first_value;
+      Alcotest.test_case "duplicate required query rejects invalid first value"
+        `Quick duplicate_required_query_rejects_invalid_first_value;
       Alcotest.test_case "invalid method" `Quick invalid_method;
       Alcotest.test_case "invalid path" `Quick invalid_path;
       Alcotest.test_case "bad path param type" `Quick bad_path_param_type;
@@ -207,6 +246,8 @@ let tests =
         required_query_param_missing;
       Alcotest.test_case "declared path param must match template" `Quick
         declared_path_param_must_match_template;
+      Alcotest.test_case "encoded slash stays inside account_id" `Quick
+        encoded_slash_stays_inside_account_id;
       Alcotest.test_case "valid POST body" `Quick valid_post_body;
       Alcotest.test_case "invalid JSON body field" `Quick
         invalid_json_body_field;

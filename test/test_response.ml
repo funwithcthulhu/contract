@@ -1,5 +1,24 @@
 open Contract
 
+type error_payload = { code : string; detail : string }
+
+let ( let* ) = Result.bind
+
+let error_payload_codec =
+  let schema =
+    Schema.obj
+      [ ("code", Schema.string, true); ("detail", Schema.string, true) ]
+  in
+  let encode error =
+    `Assoc [ ("code", `String error.code); ("detail", `String error.detail) ]
+  in
+  let decode json =
+    let* code = Json_codec.required_field "code" Json_codec.string json in
+    let* detail = Json_codec.required_field "detail" Json_codec.string json in
+    Ok { code; detail }
+  in
+  Json_codec.make ~name:"ErrorPayload" ~schema ~encode ~decode ()
+
 let expect_endpoint = function
   | Ok endpoint -> endpoint
   | Error error -> Alcotest.fail (Error.to_string error)
@@ -14,6 +33,12 @@ let user_response =
 let create_response =
   Endpoint.post "/users"
   |> Result.map (Endpoint.response ~status:201 Json_codec.int)
+  |> expect_endpoint
+
+let create_payment =
+  Endpoint.post "/payments"
+  |> Result.map (Endpoint.response ~status:201 Json_codec.string)
+  |> Result.map (Endpoint.response ~status:422 error_payload_codec)
   |> expect_endpoint
 
 let status_responses =
@@ -81,6 +106,27 @@ let declared_non_2xx_status_is_accepted () =
   | Ok body -> Alcotest.(check (option string)) "body" (Some "bad request") body
   | Error error -> Alcotest.fail (Error.to_string error)
 
+let declared_422_response_decodes_error_payload () =
+  let body =
+    `Assoc
+      [
+        ("code", `String "card_declined");
+        ("detail", `String "The issuer declined the charge");
+      ]
+  in
+  let validated =
+    Response.make ~status:422 ~body ()
+    |> Validate.response create_payment
+    |> expect_valid
+  in
+  match Validate.response_body validated error_payload_codec with
+  | Ok (Some error) ->
+      Alcotest.(check string) "code" "card_declined" error.code;
+      Alcotest.(check string)
+        "detail" "The issuer declined the charge" error.detail
+  | Ok None -> Alcotest.fail "expected decoded error payload"
+  | Error error -> Alcotest.fail (Error.to_string error)
+
 let valid_no_content_status () =
   Response.make ~status:204 ()
   |> Validate.response status_responses
@@ -138,6 +184,8 @@ let tests =
       Alcotest.test_case "valid empty body" `Quick valid_empty_body;
       Alcotest.test_case "declared non-2xx status is accepted" `Quick
         declared_non_2xx_status_is_accepted;
+      Alcotest.test_case "declared 422 response decodes error payload" `Quick
+        declared_422_response_decodes_error_payload;
       Alcotest.test_case "valid no-content status" `Quick
         valid_no_content_status;
       Alcotest.test_case "unexpected status" `Quick unexpected_status;

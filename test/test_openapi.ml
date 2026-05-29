@@ -33,6 +33,17 @@ let post_user =
   |> Result.map (Endpoint.response ~status:201 user_codec)
   |> expect_endpoint
 
+let list_sessions =
+  Endpoint.get ~summary:"List sessions" "/sessions"
+  |> Result.map (Endpoint.response ~status:200 user_codec)
+  |> expect_endpoint
+
+let create_session =
+  Endpoint.post ~summary:"Create session" "/sessions"
+  |> Result.map (Endpoint.body create_user_codec)
+  |> Result.map (Endpoint.response ~status:201 user_codec)
+  |> expect_endpoint
+
 let api : Openapi.api =
   {
     title = "Users API";
@@ -91,6 +102,29 @@ let output_contains_get_operation () =
 let output_contains_post_operation () =
   Openapi.to_yojson api |> require_path "/users" |> require_member "post"
   |> ignore
+
+let same_path_get_and_post_share_one_path_item () =
+  let json =
+    Openapi.to_yojson
+      {
+        title = "Sessions API";
+        version = "0.2.0";
+        endpoints = [ list_sessions; create_session ];
+      }
+  in
+  let paths = require_member "paths" json in
+  let path_count =
+    match paths with
+    | `Assoc fields ->
+        fields
+        |> List.filter (fun (path, _) -> String.equal path "/sessions")
+        |> List.length
+    | _ -> Alcotest.fail "paths should be an object"
+  in
+  Alcotest.(check int) "sessions path count" 1 path_count;
+  let sessions = require_member "/sessions" paths in
+  require_member "get" sessions |> ignore;
+  require_member "post" sessions |> ignore
 
 let output_contains_post_request_body () =
   Openapi.to_yojson api |> require_path "/users" |> require_member "post"
@@ -204,6 +238,8 @@ let tests =
         output_contains_get_operation;
       Alcotest.test_case "contains POST operation" `Quick
         output_contains_post_operation;
+      Alcotest.test_case "same path GET and POST share one path item" `Quick
+        same_path_get_and_post_share_one_path_item;
       Alcotest.test_case "contains POST requestBody" `Quick
         output_contains_post_request_body;
       Alcotest.test_case "contains response 200" `Quick
