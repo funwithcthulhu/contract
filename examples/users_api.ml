@@ -70,7 +70,7 @@ let create_user =
 let api : Openapi.api =
   {
     title = "Users API";
-    version = "0.1.0";
+    version = "0.2.0";
     endpoints = [ get_user; create_user ];
   }
 

@@ -11,7 +11,7 @@ synopsis: "Typed HTTP API contracts for OCaml"
 description: """
 contract describes REST-style HTTP API contracts as typed OCaml values.
 The current package provides a pure core for endpoint definitions, parameter
-and JSON decoding, request validation, and OpenAPI 3.0.3 output.
+and JSON decoding, request and response validation, and OpenAPI 3.0.3 output.
 """
 depends: [
   "ocaml" {>= "5.0"}

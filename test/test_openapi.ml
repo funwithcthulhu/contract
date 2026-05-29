@@ -36,7 +36,7 @@ let post_user =
 let api : Openapi.api =
   {
     title = "Users API";
-    version = "0.1.0";
+    version = "0.2.0";
     endpoints = [ get_user; post_user ];
   }
 
@@ -173,7 +173,7 @@ let output_escapes_strings () =
   in
   let json =
     Openapi.to_string
-      { title = "Quoted \"API\""; version = "0.1.0"; endpoints = [ endpoint ] }
+      { title = "Quoted \"API\""; version = "0.2.0"; endpoints = [ endpoint ] }
     |> Yojson.Safe.from_string
   in
   let info = require_member "info" json in
@@ -187,7 +187,7 @@ let output_escapes_strings () =
 
 let empty_api_has_empty_paths () =
   let json =
-    Openapi.to_yojson { title = "Empty API"; version = "0.1.0"; endpoints = [] }
+    Openapi.to_yojson { title = "Empty API"; version = "0.2.0"; endpoints = [] }
   in
   match require_member "paths" json with
   | `Assoc [] -> ()
