@@ -73,7 +73,7 @@ let valid_empty_body () =
   | Ok body -> Alcotest.(check (option string)) "body" None body
   | Error error -> Alcotest.fail (Error.to_string error)
 
-let valid_declared_error_status () =
+let declared_non_2xx_status_is_accepted () =
   let response = Response.make ~status:400 ~body:(`String "bad request") () in
   let validated = Validate.response status_responses response |> expect_valid in
   Alcotest.(check int) "status" 400 validated.status;
@@ -93,7 +93,7 @@ let unexpected_status () =
        (Error.make ~location:Error.Status ~expected:"200, 404" ~got:"500"
           "unexpected response status")
 
-let undeclared_success_status () =
+let undeclared_2xx_status_is_rejected () =
   Response.make ~status:202 ()
   |> Validate.response status_responses
   |> expect_error
@@ -117,7 +117,7 @@ let unexpected_body () =
   |> Validate.response user_response
   |> expect_error (Error.make ~location:Error.Body "unexpected response body")
 
-let status_specific_codec_is_used () =
+let exact_status_selects_response_codec () =
   let response = Response.make ~status:201 ~body:(`Int 42) () in
   let validated = Validate.response status_responses response |> expect_valid in
   match Validate.response_body validated Json_codec.int with
@@ -136,18 +136,18 @@ let tests =
         response_encode_succeeds;
       Alcotest.test_case "valid JSON body" `Quick valid_json_body;
       Alcotest.test_case "valid empty body" `Quick valid_empty_body;
-      Alcotest.test_case "valid declared error status" `Quick
-        valid_declared_error_status;
+      Alcotest.test_case "declared non-2xx status is accepted" `Quick
+        declared_non_2xx_status_is_accepted;
       Alcotest.test_case "valid no-content status" `Quick
         valid_no_content_status;
       Alcotest.test_case "unexpected status" `Quick unexpected_status;
-      Alcotest.test_case "undeclared 2xx status" `Quick
-        undeclared_success_status;
+      Alcotest.test_case "undeclared 2xx status is rejected" `Quick
+        undeclared_2xx_status_is_rejected;
       Alcotest.test_case "missing body" `Quick missing_body;
       Alcotest.test_case "bad JSON body" `Quick bad_json_body;
       Alcotest.test_case "unexpected body" `Quick unexpected_body;
-      Alcotest.test_case "status-specific codec is used" `Quick
-        status_specific_codec_is_used;
+      Alcotest.test_case "exact status selects response codec" `Quick
+        exact_status_selects_response_codec;
       Alcotest.test_case "request body codec is not used" `Quick
         request_body_codec_is_not_used;
     ] )
