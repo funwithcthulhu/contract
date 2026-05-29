@@ -7,19 +7,19 @@ type validated = {
 
 let retag location = function
   | Ok value -> Ok value
-  | Error error -> Error { error with Error.location = location }
+  | Error error -> Error { error with Error.location }
 
 let decode_scalar location codec value =
   codec.Codec.decode value |> retag location
 
 let required_query_missing name =
-  Error.make ~location:(Error.Query_param name) "missing required query parameter"
+  Error.make ~location:(Error.Query_param name)
+    "missing required query parameter"
 
 let path_param_missing name =
   Error.make ~location:(Error.Path_param name) "missing path parameter"
 
-let first_value name values =
-  List.assoc_opt name values
+let first_value name values = List.assoc_opt name values
 
 let validate_param path_values query_values = function
   | Endpoint.Path_param (name, codec) -> (
@@ -41,7 +41,8 @@ let validate_param path_values query_values = function
 let validate_body endpoint_body request_body =
   match (endpoint_body, request_body) with
   | None, _ -> None
-  | Some _, None -> Some (Error.make ~location:Error.Body "missing request body")
+  | Some _, None ->
+      Some (Error.make ~location:Error.Body "missing request body")
   | Some (Endpoint.Body codec), Some json -> (
       match codec.Json_codec.decode json with
       | Ok _ -> None

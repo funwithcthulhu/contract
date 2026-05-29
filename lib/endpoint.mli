@@ -1,10 +1,5 @@
 (** HTTP method names supported by the core contract model. *)
-type method_ =
-  | GET
-  | POST
-  | PUT
-  | PATCH
-  | DELETE
+type method_ = GET | POST | PUT | PATCH | DELETE
 
 (** A declared path or query parameter.
 
@@ -17,9 +12,6 @@ type param =
 type body = Body : 'a Json_codec.t -> body
 type response = Response : int * 'a Json_codec.t option -> response
 
-(** Endpoint contract values are transparent for now so callers can inspect and
-    emit them. Prefer the constructors below over hand-built records; they
-    validate path templates. *)
 type t = {
   method_ : method_;
   path : Path_template.t;
@@ -29,6 +21,9 @@ type t = {
   body : body option;
   responses : response list;
 }
+(** Endpoint contract values are transparent for now so callers can inspect and
+    emit them. Prefer the constructors below over hand-built records; they
+    validate path templates. *)
 
 val make :
   ?summary:string ->
@@ -37,57 +32,37 @@ val make :
   string ->
   (t, Error.t) result
 
+val get :
+  ?summary:string -> ?operation_id:string -> string -> (t, Error.t) result
 (** Method-specific constructors. They validate the path template and return
     [Error] instead of raising for malformed templates. *)
-val get :
-  ?summary:string ->
-  ?operation_id:string ->
-  string ->
-  (t, Error.t) result
 
 val post :
-  ?summary:string ->
-  ?operation_id:string ->
-  string ->
-  (t, Error.t) result
+  ?summary:string -> ?operation_id:string -> string -> (t, Error.t) result
 
 val put :
-  ?summary:string ->
-  ?operation_id:string ->
-  string ->
-  (t, Error.t) result
+  ?summary:string -> ?operation_id:string -> string -> (t, Error.t) result
 
 val patch :
-  ?summary:string ->
-  ?operation_id:string ->
-  string ->
-  (t, Error.t) result
+  ?summary:string -> ?operation_id:string -> string -> (t, Error.t) result
 
 val delete :
-  ?summary:string ->
-  ?operation_id:string ->
-  string ->
-  (t, Error.t) result
+  ?summary:string -> ?operation_id:string -> string -> (t, Error.t) result
 
+val path_param : string -> 'a Codec.t -> t -> t
 (** Add a declared path parameter. The name should correspond to a [:name]
     segment in the path template; validation reports an error if it does not. *)
-val path_param : string -> 'a Codec.t -> t -> t
 
+val query_param : ?required:bool -> string -> 'a Codec.t -> t -> t
 (** Add a declared query parameter. Query parameters are optional unless
     [~required:true] is supplied. *)
-val query_param :
-  ?required:bool ->
-  string ->
-  'a Codec.t ->
-  t ->
-  t
 
-(** Declare a JSON request body. *)
 val body : 'a Json_codec.t -> t -> t
+(** Declare a JSON request body. *)
 
+val response : status:int -> 'a Json_codec.t -> t -> t
 (** Declare a JSON response body for [status]. Response bodies are not validated
     by the current core validator. *)
-val response : status:int -> 'a Json_codec.t -> t -> t
 
 val empty_response : status:int -> t -> t
 val method_to_string : method_ -> string

@@ -1,8 +1,4 @@
-type primitive =
-  | String
-  | Integer
-  | Number
-  | Boolean
+type primitive = String | Integer | Number | Boolean
 
 type t =
   | Any
@@ -29,24 +25,21 @@ let primitive_type = function
 let rec to_openapi = function
   | Any -> `Assoc []
   | Null -> `Assoc [ ("nullable", `Bool true) ]
-  | Primitive primitive -> `Assoc [ ("type", `String (primitive_type primitive)) ]
+  | Primitive primitive ->
+      `Assoc [ ("type", `String (primitive_type primitive)) ]
   | Array item ->
       `Assoc [ ("type", `String "array"); ("items", to_openapi item) ]
   | Object fields ->
       let properties =
-        fields
-        |> List.map (fun (name, schema, _) -> (name, to_openapi schema))
+        fields |> List.map (fun (name, schema, _) -> (name, to_openapi schema))
       in
       let required =
         fields
         |> List.filter_map (fun (name, _, is_required) ->
-               if is_required then Some (`String name) else None)
+            if is_required then Some (`String name) else None)
       in
       let base =
-        [
-          ("type", `String "object");
-          ("properties", `Assoc properties);
-        ]
+        [ ("type", `String "object"); ("properties", `Assoc properties) ]
       in
       let fields =
         match required with

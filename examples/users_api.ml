@@ -1,15 +1,7 @@
 open Contract
 
-type user = {
-  id : int;
-  email : string;
-  name : string option;
-}
-
-type create_user = {
-  email : string;
-  name : string option;
-}
+type user = { id : int; email : string; name : string option }
+type create_user = { email : string; name : string option }
 
 let ( let* ) = Result.bind
 
@@ -46,11 +38,7 @@ let user_codec =
   Json_codec.make ~name:"User" ~schema:user_schema ~encode ~decode ()
 
 let create_user_schema =
-  Schema.obj
-    [
-      ("email", Schema.string, true);
-      ("name", Schema.string, false);
-    ]
+  Schema.obj [ ("email", Schema.string, true); ("name", Schema.string, false) ]
 
 let create_user_codec =
   let encode create_user =
@@ -63,7 +51,8 @@ let create_user_codec =
     let* name = Json_codec.optional_field "name" Json_codec.string json in
     Ok { email; name }
   in
-  Json_codec.make ~name:"CreateUser" ~schema:create_user_schema ~encode ~decode ()
+  Json_codec.make ~name:"CreateUser" ~schema:create_user_schema ~encode ~decode
+    ()
 
 let get_user =
   Endpoint.get ~summary:"Fetch a user" ~operation_id:"getUser" "/users/:id"
@@ -85,5 +74,4 @@ let api : Openapi.api =
     endpoints = [ get_user; create_user ];
   }
 
-let () =
-  print_endline (Openapi.to_string ~pretty:true api)
+let () = print_endline (Openapi.to_string ~pretty:true api)

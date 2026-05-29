@@ -12,17 +12,10 @@ let expect_error = function
   | Ok _ -> Alcotest.fail "expected decode to fail"
   | Error _ -> ()
 
-let int_success () =
-  Codec.int.decode "42" |> expect_ok 42
-
-let int_failure () =
-  Codec.int.decode "abc" |> expect_error
-
-let bool_success () =
-  Codec.bool.decode "false" |> expect_bool false
-
-let bool_failure () =
-  Codec.bool.decode "yes" |> expect_error
+let int_success () = Codec.int.decode "42" |> expect_ok 42
+let int_failure () = Codec.int.decode "abc" |> expect_error
+let bool_success () = Codec.bool.decode "false" |> expect_bool false
+let bool_failure () = Codec.bool.decode "yes" |> expect_error
 
 let tests =
   ( "scalar codecs",

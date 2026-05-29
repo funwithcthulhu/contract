@@ -1,11 +1,5 @@
-type segment =
-  | Static of string
-  | Param of string
-
-type t = {
-  raw : string;
-  segments : segment list;
-}
+type segment = Static of string | Param of string
+type t = { raw : string; segments : segment list }
 
 let raw template = template.raw
 let segments template = template.segments
@@ -25,14 +19,14 @@ let split_path path =
     | "" :: parts when List.exists (( = ) "") parts ->
         Error (Error.make ~location:Error.Route ~got:path "empty path segment")
     | "" :: parts -> Ok parts
-    | _ -> Error (Error.make ~location:Error.Route ~got:path "empty path segment")
+    | _ ->
+        Error (Error.make ~location:Error.Route ~got:path "empty path segment")
 
 let parse_segment = function
   | "" -> route_error "empty path segment"
   | segment when segment.[0] = ':' ->
       let name = String.sub segment 1 (String.length segment - 1) in
-      if name = "" then route_error "empty path parameter"
-      else Ok (Param name)
+      if name = "" then route_error "empty path parameter" else Ok (Param name)
   | segment -> Ok (Static segment)
 
 let parse raw =
@@ -63,8 +57,9 @@ let is_valid_utf8 value =
   let byte index = Char.code value.[index] in
   let byte_in_range index low high =
     index < length
-    && let value = byte index in
-       value >= low && value <= high
+    &&
+    let value = byte index in
+    value >= low && value <= high
   in
   let continuation index = byte_in_range index 0x80 0xbf in
   let rec valid_at index =
@@ -129,12 +124,12 @@ let percent_decode_param name value =
           then
             path_param_error name ~expected:"%HH" ~got:value
               "malformed percent escape"
-          else (
+          else
             let code =
               (hex_value value.[index + 1] * 16) + hex_value value.[index + 2]
             in
             Buffer.add_char buffer (Char.chr code);
-            decode_at (index + 3))
+            decode_at (index + 3)
       | ch ->
           Buffer.add_char buffer ch;
           decode_at (index + 1)

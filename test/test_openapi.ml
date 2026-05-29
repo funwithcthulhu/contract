@@ -2,19 +2,17 @@ open Contract
 
 let user_codec =
   let schema =
-    Schema.obj
-      [
-        ("id", Schema.integer, true);
-        ("email", Schema.string, true);
-      ]
+    Schema.obj [ ("id", Schema.integer, true); ("email", Schema.string, true) ]
   in
-  Json_codec.make ~name:"User" ~schema ~encode:(fun () -> `Assoc [])
+  Json_codec.make ~name:"User" ~schema
+    ~encode:(fun () -> `Assoc [])
     ~decode:(fun _ -> Ok ())
     ()
 
 let create_user_codec =
   let schema = Schema.obj [ ("email", Schema.string, true) ] in
-  Json_codec.make ~name:"CreateUser" ~schema ~encode:(fun () -> `Assoc [])
+  Json_codec.make ~name:"CreateUser" ~schema
+    ~encode:(fun () -> `Assoc [])
     ~decode:(fun _ -> Ok ())
     ()
 
@@ -35,7 +33,11 @@ let post_user =
   |> expect_endpoint
 
 let api : Openapi.api =
-  { title = "Users API"; version = "0.1.0"; endpoints = [ get_user; post_user ] }
+  {
+    title = "Users API";
+    version = "0.1.0";
+    endpoints = [ get_user; post_user ];
+  }
 
 let member name = function
   | `Assoc fields -> List.assoc_opt name fields
@@ -60,28 +62,21 @@ let output_contains_users_id_path () =
   Openapi.to_yojson api |> require_path "/users/{id}" |> ignore
 
 let output_contains_get_operation () =
-  Openapi.to_yojson api
-  |> require_path "/users/{id}"
-  |> require_member "get"
+  Openapi.to_yojson api |> require_path "/users/{id}" |> require_member "get"
   |> ignore
 
 let output_contains_post_operation () =
-  Openapi.to_yojson api |> require_path "/users" |> require_member "post" |> ignore
+  Openapi.to_yojson api |> require_path "/users" |> require_member "post"
+  |> ignore
 
 let output_contains_post_request_body () =
-  Openapi.to_yojson api
-  |> require_path "/users"
-  |> require_member "post"
+  Openapi.to_yojson api |> require_path "/users" |> require_member "post"
   |> require_member "requestBody"
   |> ignore
 
 let output_contains_response_200 () =
-  Openapi.to_yojson api
-  |> require_path "/users/{id}"
-  |> require_member "get"
-  |> require_member "responses"
-  |> require_member "200"
-  |> ignore
+  Openapi.to_yojson api |> require_path "/users/{id}" |> require_member "get"
+  |> require_member "responses" |> require_member "200" |> ignore
 
 let tests =
   ( "openapi",
@@ -96,5 +91,6 @@ let tests =
         output_contains_post_operation;
       Alcotest.test_case "contains POST requestBody" `Quick
         output_contains_post_request_body;
-      Alcotest.test_case "contains response 200" `Quick output_contains_response_200;
+      Alcotest.test_case "contains response 200" `Quick
+        output_contains_response_200;
     ] )

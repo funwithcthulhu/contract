@@ -15,13 +15,8 @@ type t = {
   got : string option;
 }
 
+val make : ?expected:string -> ?got:string -> location:location -> string -> t
 (** [make ~location message] constructs an error with optional expected and
     observed values for diagnostics. *)
-val make :
-  ?expected:string ->
-  ?got:string ->
-  location:location ->
-  string ->
-  t
 
 val to_string : t -> string

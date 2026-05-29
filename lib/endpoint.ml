@@ -1,9 +1,4 @@
-type method_ =
-  | GET
-  | POST
-  | PUT
-  | PATCH
-  | DELETE
+type method_ = GET | POST | PUT | PATCH | DELETE
 
 type param =
   | Path_param : string * 'a Codec.t -> param
@@ -47,13 +42,18 @@ let path_param name codec endpoint =
   { endpoint with params = endpoint.params @ [ Path_param (name, codec) ] }
 
 let query_param ?(required = false) name codec endpoint =
-  { endpoint with params = endpoint.params @ [ Query_param (name, required, codec) ] }
+  {
+    endpoint with
+    params = endpoint.params @ [ Query_param (name, required, codec) ];
+  }
 
-let body codec endpoint =
-  { endpoint with body = Some (Body codec) }
+let body codec endpoint = { endpoint with body = Some (Body codec) }
 
 let response ~status codec endpoint =
-  { endpoint with responses = endpoint.responses @ [ Response (status, Some codec) ] }
+  {
+    endpoint with
+    responses = endpoint.responses @ [ Response (status, Some codec) ];
+  }
 
 let empty_response ~status endpoint =
   { endpoint with responses = endpoint.responses @ [ Response (status, None) ] }

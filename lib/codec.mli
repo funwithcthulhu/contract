@@ -7,14 +7,14 @@ type 'a t = {
   decode : string -> ('a, Error.t) result;
 }
 
-(** Accepts any input and returns it unchanged. *)
 val string : string t
+(** Accepts any input and returns it unchanged. *)
 
-(** Decodes with [int_of_string_opt]. *)
 val int : int t
+(** Decodes with [int_of_string_opt]. *)
 
-(** Accepts only ["true"] and ["false"]. *)
 val bool : bool t
+(** Accepts only ["true"] and ["false"]. *)
 
-(** Decodes with [float_of_string_opt]. *)
 val float : float t
+(** Decodes with [float_of_string_opt]. *)

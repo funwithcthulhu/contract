@@ -5,5 +5,4 @@ type t = {
   body : Yojson.Safe.t option;
 }
 
-let make ?(query = []) ?body ~method_ ~path () =
-  { method_; path; query; body }
+let make ?(query = []) ?body ~method_ ~path () = { method_; path; query; body }

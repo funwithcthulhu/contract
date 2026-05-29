@@ -1,8 +1,4 @@
-type api = {
-  title : string;
-  version : string;
-  endpoints : Endpoint.t list;
-}
+type api = { title : string; version : string; endpoints : Endpoint.t list }
 
 let optional name = function
   | None -> []
@@ -28,18 +24,12 @@ let parameter_to_yojson = function
 
 let json_content schema =
   `Assoc
-    [
-      ( "application/json",
-        `Assoc [ ("schema", Schema.to_openapi schema) ] );
-    ]
+    [ ("application/json", `Assoc [ ("schema", Schema.to_openapi schema) ]) ]
 
 let request_body_to_yojson = function
   | Endpoint.Body codec ->
       `Assoc
-        [
-          ("required", `Bool true);
-          ("content", json_content codec.schema);
-        ]
+        [ ("required", `Bool true); ("content", json_content codec.schema) ]
 
 let response_description status =
   if status >= 200 && status < 300 then "Success" else "Response"
@@ -58,14 +48,10 @@ let operation_to_yojson endpoint =
   let fields =
     optional "summary" endpoint.Endpoint.summary
     @ optional "operationId" endpoint.operation_id
-    @ [
-        ( "parameters",
-          `List (List.map parameter_to_yojson endpoint.params) );
-      ]
-    @
-    (match endpoint.body with
-    | None -> []
-    | Some body -> [ ("requestBody", request_body_to_yojson body) ])
+    @ [ ("parameters", `List (List.map parameter_to_yojson endpoint.params)) ]
+    @ (match endpoint.body with
+      | None -> []
+      | Some body -> [ ("requestBody", request_body_to_yojson body) ])
     @ [ ("responses", `Assoc (List.map response_to_pair endpoint.responses)) ]
   in
   `Assoc fields
@@ -78,9 +64,12 @@ let add_endpoint paths endpoint =
   | None -> paths @ [ (path, `Assoc [ (method_, operation) ]) ]
   | Some (`Assoc methods_) ->
       let paths_without_current =
-        List.filter (fun (candidate, _) -> not (String.equal candidate path)) paths
+        List.filter
+          (fun (candidate, _) -> not (String.equal candidate path))
+          paths
       in
-      paths_without_current @ [ (path, `Assoc (methods_ @ [ (method_, operation) ])) ]
+      paths_without_current
+      @ [ (path, `Assoc (methods_ @ [ (method_, operation) ])) ]
   | Some _ -> paths
 
 let to_yojson api =
@@ -90,13 +79,11 @@ let to_yojson api =
       ("openapi", `String "3.0.3");
       ( "info",
         `Assoc
-          [
-            ("title", `String api.title);
-            ("version", `String api.version);
-          ] );
+          [ ("title", `String api.title); ("version", `String api.version) ] );
       ("paths", `Assoc paths);
     ]
 
 let to_string ?(pretty = false) api =
   let json = to_yojson api in
-  if pretty then Yojson.Safe.pretty_to_string json else Yojson.Safe.to_string json
+  if pretty then Yojson.Safe.pretty_to_string json
+  else Yojson.Safe.to_string json

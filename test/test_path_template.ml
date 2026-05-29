@@ -20,7 +20,8 @@ let rejects_path_param ~message ?expected ?got template path =
   | Ok _ -> Alcotest.fail "expected path match to fail"
   | Error error ->
       Alcotest.(check bool)
-        "location" true (error.Error.location = Error.Path_param "id");
+        "location" true
+        (error.Error.location = Error.Path_param "id");
       Alcotest.(check string) "message" message error.message;
       Alcotest.(check (option string)) "expected" expected error.expected;
       Alcotest.(check (option string)) "got" got error.got
@@ -32,23 +33,30 @@ let parses_user_id () =
 let matches_user_id () =
   let template = parse_exn "/users/:id" in
   Alcotest.(check (list (pair string string)))
-    "params" [ ("id", "42") ] (matches_exn template "/users/42")
+    "params"
+    [ ("id", "42") ]
+    (matches_exn template "/users/42")
 
 let decodes_percent_encoded_space () =
   let template = parse_exn "/users/:id" in
   Alcotest.(check (list (pair string string)))
-    "params" [ ("id", "alice smith") ]
+    "params"
+    [ ("id", "alice smith") ]
     (matches_exn template "/users/alice%20smith")
 
 let encoded_slash_stays_inside_path_param () =
   let template = parse_exn "/files/:path" in
   Alcotest.(check (list (pair string string)))
-    "params" [ ("path", "a/b") ] (matches_exn template "/files/a%2Fb")
+    "params"
+    [ ("path", "a/b") ]
+    (matches_exn template "/files/a%2Fb")
 
 let decodes_lowercase_and_uppercase_hex () =
   let template = parse_exn "/users/:id" in
   Alcotest.(check (list (pair string string)))
-    "params" [ ("id", "~~") ] (matches_exn template "/users/%7e%7E")
+    "params"
+    [ ("id", "~~") ]
+    (matches_exn template "/users/%7e%7E")
 
 let literal_slash_still_splits_path_segments () =
   parse_exn "/files/:path" |> fun template -> rejects template "/files/a/b"
@@ -56,7 +64,8 @@ let literal_slash_still_splits_path_segments () =
 let literal_segment_is_matched_without_decoding () =
   let template = parse_exn "/users/alice%20smith" in
   Alcotest.(check (list (pair string string)))
-    "params" [] (matches_exn template "/users/alice%20smith");
+    "params" []
+    (matches_exn template "/users/alice%20smith");
   rejects template "/users/alice smith"
 
 let rejects_percent_at_end () =
@@ -83,7 +92,8 @@ let rejects_long_path () =
 let converts_to_openapi_path () =
   let template = parse_exn "/users/:id" in
   Alcotest.(check string)
-    "openapi path" "/users/{id}" (Path_template.to_openapi_path template)
+    "openapi path" "/users/{id}"
+    (Path_template.to_openapi_path template)
 
 let tests =
   ( "path templates",

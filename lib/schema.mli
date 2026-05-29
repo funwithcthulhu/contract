@@ -3,11 +3,7 @@
     Object fields use [(name, schema, required)]. This is intentionally smaller
     than full JSON Schema. *)
 
-type primitive =
-  | String
-  | Integer
-  | Number
-  | Boolean
+type primitive = String | Integer | Number | Boolean
 
 type t =
   | Any

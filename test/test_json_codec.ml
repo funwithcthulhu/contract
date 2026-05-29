@@ -15,8 +15,7 @@ let expect_error = function
 let string_success () =
   Json_codec.string.decode (`String "alice") |> expect_string "alice"
 
-let string_failure () =
-  Json_codec.string.decode (`Int 1) |> expect_error
+let string_failure () = Json_codec.string.decode (`Int 1) |> expect_error
 
 let required_field_success () =
   let json = `Assoc [ ("email", `String "a@example.test") ] in
@@ -24,7 +23,8 @@ let required_field_success () =
   |> expect_string "a@example.test"
 
 let required_field_missing () =
-  Json_codec.required_field "email" Json_codec.string (`Assoc []) |> expect_error
+  Json_codec.required_field "email" Json_codec.string (`Assoc [])
+  |> expect_error
 
 let optional_field_missing () =
   Json_codec.optional_field "name" Json_codec.string (`Assoc [])

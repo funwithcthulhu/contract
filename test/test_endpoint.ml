@@ -11,14 +11,15 @@ let expect_error = function
 let get_validates_template () =
   let endpoint = Endpoint.get "/users/:id" |> expect_endpoint in
   Alcotest.(check string)
-    "path" "/users/:id" (Path_template.raw endpoint.Endpoint.path)
+    "path" "/users/:id"
+    (Path_template.raw endpoint.Endpoint.path)
 
-let get_rejects_invalid_template () =
-  Endpoint.get "/users//:id" |> expect_error
+let get_rejects_invalid_template () = Endpoint.get "/users//:id" |> expect_error
 
 let method_name () =
   Alcotest.(check string)
-    "method" "GET" (Endpoint.method_to_string Endpoint.GET)
+    "method" "GET"
+    (Endpoint.method_to_string Endpoint.GET)
 
 let tests =
   ( "endpoints",

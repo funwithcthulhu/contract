@@ -1,19 +1,13 @@
 open Contract
 
-type create_user = {
-  email : string;
-  name : string option;
-}
+type create_user = { email : string; name : string option }
 
 let ( let* ) = Result.bind
 
 let create_user_codec =
   let schema =
     Schema.obj
-      [
-        ("email", Schema.string, true);
-        ("name", Schema.string, false);
-      ]
+      [ ("email", Schema.string, true); ("name", Schema.string, false) ]
   in
   let encode create_user =
     let fields = [ ("email", `String create_user.email) ] in
@@ -42,7 +36,8 @@ let get_user =
 let get_user_required_query =
   Endpoint.get "/users/:id"
   |> Result.map (Endpoint.path_param "id" Codec.int)
-  |> Result.map (Endpoint.query_param ~required:true "include_deleted" Codec.bool)
+  |> Result.map
+       (Endpoint.query_param ~required:true "include_deleted" Codec.bool)
   |> Result.map (Endpoint.response ~status:200 Json_codec.string)
   |> expect_endpoint
 
@@ -72,8 +67,7 @@ let expect_error_location expected = function
   | Ok _ -> Alcotest.fail "expected validation to fail"
   | Error [] -> Alcotest.fail "expected at least one validation error"
   | Error (error :: _) ->
-      Alcotest.(check bool)
-        "location" true (error.Error.location = expected)
+      Alcotest.(check bool) "location" true (error.Error.location = expected)
 
 let valid_get () =
   let request =
@@ -82,24 +76,21 @@ let valid_get () =
       ()
   in
   let validated = Validate.request get_user request |> expect_valid in
-  begin
-    match Validate.path validated "id" Codec.int with
-    | Ok id -> Alcotest.(check int) "id" 42 id
-    | Error error -> Alcotest.fail (Error.to_string error)
+  begin match Validate.path validated "id" Codec.int with
+  | Ok id -> Alcotest.(check int) "id" 42 id
+  | Error error -> Alcotest.fail (Error.to_string error)
   end;
   match Validate.query validated "include_deleted" Codec.bool with
   | Ok include_deleted ->
-      Alcotest.(check (option bool)) "include_deleted" (Some false)
-        include_deleted
+      Alcotest.(check (option bool))
+        "include_deleted" (Some false) include_deleted
   | Error error -> Alcotest.fail (Error.to_string error)
 
 let undeclared_query_is_ignored () =
   Request.make ~method_:Endpoint.GET ~path:"/users/42"
     ~query:[ ("unused", "value") ]
     ()
-  |> Validate.request get_user
-  |> expect_valid
-  |> ignore
+  |> Validate.request get_user |> expect_valid |> ignore
 
 let duplicate_query_uses_first_value () =
   let request =
@@ -110,24 +101,21 @@ let duplicate_query_uses_first_value () =
   let validated = Validate.request get_user request |> expect_valid in
   match Validate.query validated "include_deleted" Codec.bool with
   | Ok include_deleted ->
-      Alcotest.(check (option bool)) "include_deleted" (Some true)
-        include_deleted
+      Alcotest.(check (option bool))
+        "include_deleted" (Some true) include_deleted
   | Error error -> Alcotest.fail (Error.to_string error)
 
 let invalid_method () =
   Request.make ~method_:Endpoint.POST ~path:"/users/42" ()
-  |> Validate.request get_user
-  |> expect_error
+  |> Validate.request get_user |> expect_error
 
 let invalid_path () =
   Request.make ~method_:Endpoint.GET ~path:"/accounts/42" ()
-  |> Validate.request get_user
-  |> expect_error
+  |> Validate.request get_user |> expect_error
 
 let bad_path_param_type () =
   Request.make ~method_:Endpoint.GET ~path:"/users/not-an-int" ()
-  |> Validate.request get_user
-  |> expect_error
+  |> Validate.request get_user |> expect_error
 
 let bad_query_param_type () =
   Request.make ~method_:Endpoint.GET ~path:"/users/42"
@@ -149,9 +137,7 @@ let declared_path_param_must_match_template () =
 let valid_post_body () =
   let body = `Assoc [ ("email", `String "a@example.test") ] in
   Request.make ~method_:Endpoint.POST ~path:"/users" ~body ()
-  |> Validate.request post_user
-  |> expect_valid
-  |> ignore
+  |> Validate.request post_user |> expect_valid |> ignore
 
 let invalid_json_body_field () =
   let body = `Assoc [ ("email", `Int 1) ] in
@@ -161,16 +147,11 @@ let invalid_json_body_field () =
 
 let extra_json_body_fields_are_ignored () =
   let body =
-    `Assoc
-      [
-        ("email", `String "a@example.test");
-        ("role", `String "admin");
-      ]
+    `Assoc [ ("email", `String "a@example.test"); ("role", `String "admin") ]
   in
   let validated =
     Request.make ~method_:Endpoint.POST ~path:"/users" ~body ()
-    |> Validate.request post_user
-    |> expect_valid
+    |> Validate.request post_user |> expect_valid
   in
   match Validate.body validated create_user_codec with
   | Ok (Some create_user) ->
@@ -181,8 +162,7 @@ let extra_json_body_fields_are_ignored () =
 
 let missing_post_body () =
   Request.make ~method_:Endpoint.POST ~path:"/users" ()
-  |> Validate.request post_user
-  |> expect_error
+  |> Validate.request post_user |> expect_error
 
 let tests =
   ( "request validation",

@@ -23,25 +23,18 @@ val int : int t
 val bool : bool t
 val float : float t
 
-(** [option codec] treats JSON [null] as [None]. *)
 val option : 'a t -> 'a option t
+(** [option codec] treats JSON [null] as [None]. *)
 
+val list : 'a t -> 'a list t
 (** Decodes every list item with the supplied codec and stops at the first
     error. *)
-val list : 'a t -> 'a list t
 
+val required_field : string -> 'a t -> Yojson.Safe.t -> ('a, Error.t) result
 (** Decode a required field from a JSON object. Missing fields and non-object
     values return [Error]. Unrelated object fields are ignored. *)
-val required_field :
-  string ->
-  'a t ->
-  Yojson.Safe.t ->
-  ('a, Error.t) result
 
+val optional_field :
+  string -> 'a t -> Yojson.Safe.t -> ('a option, Error.t) result
 (** Decode an optional field from a JSON object. Missing fields and JSON [null]
     both return [Ok None]. Unrelated object fields are ignored. *)
-val optional_field :
-  string ->
-  'a t ->
-  Yojson.Safe.t ->
-  ('a option, Error.t) result

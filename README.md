@@ -23,9 +23,10 @@ See `examples/users_api.ml` for a small users API with `GET /users/:id` and `POS
 dune exec examples/users_api.exe
 ```
 
-Build and test:
+Development:
 
 ```sh
+dune fmt
 dune build @all
 dune runtest
 ```
