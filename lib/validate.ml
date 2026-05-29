@@ -11,9 +11,7 @@ type validated_response = {
   body : Yojson.Safe.t option;
 }
 
-type response_body =
-  | No_body
-  | Json_body : 'a Json_codec.t -> response_body
+type response_body = No_body | Json_body : 'a Json_codec.t -> response_body
 
 let retag location = function
   | Ok value -> Ok value
@@ -69,10 +67,7 @@ let response_for_status endpoint status =
   List.find_map
     (fun (Endpoint.Response (declared_status, body)) ->
       if declared_status = status then
-        Some
-          (match body with
-          | None -> No_body
-          | Some codec -> Json_body codec)
+        Some (match body with None -> No_body | Some codec -> Json_body codec)
       else None)
     endpoint.Endpoint.responses
 
@@ -82,7 +77,8 @@ let unexpected_status endpoint response =
     | [] -> None
     | statuses -> Some (String.concat ", " statuses)
   in
-  Error.make ?expected ~got:(status_to_string response.Response.status)
+  Error.make ?expected
+    ~got:(status_to_string response.Response.status)
     ~location:Error.Status "unexpected response status"
 
 let validate_response_body expected_body response_body =
@@ -162,11 +158,5 @@ let response endpoint (response : Response.t) =
   | None -> Error [ unexpected_status endpoint response ]
   | Some expected_body -> (
       match validate_response_body expected_body response.body with
-      | None ->
-          Ok
-            {
-              endpoint;
-              status = response.status;
-              body = response.body;
-            }
+      | None -> Ok { endpoint; status = response.status; body = response.body }
       | Some error -> Error [ error ])

@@ -25,8 +25,7 @@ let expect_error_location expected = function
   | Ok _ -> Alcotest.fail "expected response validation to fail"
   | Error [] -> Alcotest.fail "expected at least one validation error"
   | Error (error :: _) ->
-      Alcotest.(check bool)
-        "location" true (error.Error.location = expected)
+      Alcotest.(check bool) "location" true (error.Error.location = expected)
 
 let valid_json_body () =
   let response = Response.make ~status:200 ~body:(`String "alice") () in
@@ -38,7 +37,9 @@ let valid_json_body () =
 
 let valid_empty_body () =
   let validated =
-    Response.make ~status:404 () |> Validate.response user_response |> expect_valid
+    Response.make ~status:404 ()
+    |> Validate.response user_response
+    |> expect_valid
   in
   match Validate.response_body validated Json_codec.string with
   | Ok body -> Alcotest.(check (option string)) "body" None body

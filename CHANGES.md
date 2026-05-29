@@ -16,4 +16,4 @@ Initial release of the pure OCaml contract core.
 - Include a users API example and focused Alcotest coverage.
 
 Current scope is intentionally small. There are no HTTP adapters, typed clients,
-mock servers, OpenAPI import, or response validation yet.
+mock servers, or OpenAPI import yet.
