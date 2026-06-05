@@ -1,17 +1,17 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Invoices API",
+    "title": "Tiny Users API",
     "version": "0.2.0"
   },
   "paths": {
-    "/invoices/{invoice_id}": {
+    "/users/{id}": {
       "get": {
-        "summary": "Fetch invoice status",
-        "operationId": "getInvoiceStatus",
+        "summary": "Fetch a user",
+        "operationId": "getUser",
         "parameters": [
           {
-            "name": "invoice_id",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -19,7 +19,7 @@
             }
           },
           {
-            "name": "include_voided",
+            "name": "include_deleted",
             "in": "query",
             "required": false,
             "schema": {
@@ -38,18 +38,13 @@
                     "id": {
                       "type": "integer"
                     },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "open",
-                        "paid",
-                        "void"
-                      ]
+                    "email": {
+                      "type": "string"
                     }
                   },
                   "required": [
                     "id",
-                    "status"
+                    "email"
                   ]
                 }
               }

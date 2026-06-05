@@ -186,19 +186,19 @@ let no_content_status_rejects_unexpected_body () =
   |> Validate.response status_responses
   |> expect_error (Error.make ~location:Error.Body "unexpected response body")
 
-let unknown_500_status_reports_declared_statuses () =
+let unknown_500_status_reports_endpoint_context () =
   Response.make ~status:500 ()
   |> Validate.response user_response
   |> expect_error
        (Error.make ~location:Error.Status ~expected:"200, 404" ~got:"500"
-          "unexpected response status")
+          "unexpected response status for GET /users/:id")
 
 let undeclared_2xx_status_is_rejected () =
   Response.make ~status:202 ()
   |> Validate.response status_responses
   |> expect_error
        (Error.make ~location:Error.Status ~expected:"200, 201, 204, 400"
-          ~got:"202" "unexpected response status")
+          ~got:"202" "unexpected response status for GET /status")
 
 let missing_body () =
   Response.make ~status:200 ()
@@ -248,8 +248,8 @@ let tests =
         valid_no_content_status;
       Alcotest.test_case "no-content status rejects unexpected body" `Quick
         no_content_status_rejects_unexpected_body;
-      Alcotest.test_case "unknown 500 status reports declared statuses" `Quick
-        unknown_500_status_reports_declared_statuses;
+      Alcotest.test_case "unknown 500 status reports endpoint context" `Quick
+        unknown_500_status_reports_endpoint_context;
       Alcotest.test_case "undeclared 2xx status is rejected" `Quick
         undeclared_2xx_status_is_rejected;
       Alcotest.test_case "missing body" `Quick missing_body;

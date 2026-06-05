@@ -117,6 +117,11 @@ let body (validated : validated) codec =
 
 let status_to_string status = string_of_int status
 
+let endpoint_label endpoint =
+  Endpoint.method_to_string endpoint.Endpoint.method_
+  ^ " "
+  ^ Path_template.raw endpoint.path
+
 let expected_response_statuses endpoint =
   List.map
     (fun (Endpoint.Response (status, _)) -> status_to_string status)
@@ -138,7 +143,8 @@ let unexpected_response_status endpoint response =
   in
   Error.make ?expected
     ~got:(status_to_string (Response.status response))
-    ~location:Error.Status "unexpected response status"
+    ~location:Error.Status
+    ("unexpected response status for " ^ endpoint_label endpoint)
 
 let validate_response_body expected_body body =
   match (expected_body, body) with

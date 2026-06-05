@@ -123,7 +123,7 @@ let rejects_trailing_slash () =
     "/users/42/"
 
 let rejects_duplicate_path_parameter_names () =
-  rejects_route ~message:"duplicate path parameter: id" "/users/:id/posts/:id"
+  rejects_route ~message:"duplicate path parameter: id" "/x/:id/y/:id"
 
 let converts_to_openapi_path () =
   let template = parse_exn "/users/:id" in

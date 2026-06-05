@@ -229,7 +229,7 @@ let valid_post_body () =
   | Ok None -> Alcotest.fail "expected decoded request body"
   | Error error -> Alcotest.fail (Error.to_string error)
 
-let invalid_json_body_field () =
+let invalid_json_body_field_omits_raw_body () =
   let body =
     `Assoc
       [ ("email", `Int 1); ("name", `String "super-secret-raw-body-marker") ]
@@ -281,8 +281,8 @@ let tests =
       Alcotest.test_case "encoded slash stays inside account_id" `Quick
         encoded_slash_stays_inside_account_id;
       Alcotest.test_case "valid POST body" `Quick valid_post_body;
-      Alcotest.test_case "invalid JSON body field" `Quick
-        invalid_json_body_field;
+      Alcotest.test_case "invalid JSON body field omits raw body" `Quick
+        invalid_json_body_field_omits_raw_body;
       Alcotest.test_case "extra JSON body fields are ignored" `Quick
         extra_json_body_fields_are_ignored;
       Alcotest.test_case "missing POST body" `Quick missing_post_body;

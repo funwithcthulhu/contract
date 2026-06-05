@@ -9,5 +9,5 @@
   test_validate
   test_response
   test_openapi)
- (deps fixtures/openapi_invoices_api.json)
+ (deps fixtures/openapi_tiny_users_api.json)
  (libraries alcotest contract yojson))
