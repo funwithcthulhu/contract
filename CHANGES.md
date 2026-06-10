@@ -1,6 +1,6 @@
 # Changes
 
-## 0.2.0 - 2026-05-29
+## 0.2.0 - 2026-06-09
 
 - Add pure response validation for declared status codes and JSON response
   bodies.
