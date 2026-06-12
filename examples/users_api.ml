@@ -5,8 +5,8 @@ type create_user = { email : string; name : string option }
 
 let ( let* ) = Result.bind
 
-let endpoint_or_exit = function
-  | Ok endpoint -> endpoint
+let or_exit = function
+  | Ok value -> value
   | Error error ->
       prerr_endline (Error.to_string error);
       exit 1
@@ -59,19 +59,17 @@ let get_user =
   |> Result.map (Endpoint.path_param "id" Codec.int)
   |> Result.map (Endpoint.query_param "include_deleted" Codec.bool)
   |> Result.map (Endpoint.response ~status:200 user_codec)
-  |> endpoint_or_exit
+  |> or_exit
 
 let create_user =
   Endpoint.post ~summary:"Create a user" ~operation_id:"createUser" "/users"
   |> Result.map (Endpoint.body create_user_codec)
   |> Result.map (Endpoint.response ~status:201 user_codec)
-  |> endpoint_or_exit
+  |> or_exit
 
-let api : Openapi.api =
-  {
-    title = "Users API";
-    version = "0.2.0";
-    endpoints = [ get_user; create_user ];
-  }
+let api =
+  Api.make ~title:"Users API" ~version:"0.3.0" [ get_user; create_user ]
+  |> or_exit
 
-let () = print_endline (Openapi.to_string ~pretty:true api)
+let () =
+  api |> Openapi.of_api |> Openapi.to_string ~pretty:true |> print_endline

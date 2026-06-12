@@ -51,12 +51,12 @@ let create_session =
 let api : Openapi.api =
   {
     title = "Users API";
-    version = "0.2.0";
+    version = "0.3.0";
     endpoints = [ get_user; post_user ];
   }
 
 let tiny_users_contract_api =
-  Api.make ~title:"Tiny Users API" ~version:"0.2.0" [ get_user ] |> expect_api
+  Api.make ~title:"Tiny Users API" ~version:"0.3.0" [ get_user ] |> expect_api
 
 let member name = function
   | `Assoc fields -> List.assoc_opt name fields
@@ -115,7 +115,7 @@ let same_path_get_and_post_share_one_path_item () =
     Openapi.to_yojson
       {
         title = "Sessions API";
-        version = "0.2.0";
+        version = "0.3.0";
         endpoints = [ list_sessions; create_session ];
       }
   in
@@ -228,7 +228,7 @@ let output_escapes_strings () =
   in
   let json =
     Openapi.to_string
-      { title = "Quoted \"API\""; version = "0.2.0"; endpoints = [ endpoint ] }
+      { title = "Quoted \"API\""; version = "0.3.0"; endpoints = [ endpoint ] }
     |> Yojson.Safe.from_string
   in
   let info = require_member "info" json in
@@ -242,7 +242,7 @@ let output_escapes_strings () =
 
 let empty_api_has_empty_paths () =
   let json =
-    Openapi.to_yojson { title = "Empty API"; version = "0.2.0"; endpoints = [] }
+    Openapi.to_yojson { title = "Empty API"; version = "0.3.0"; endpoints = [] }
   in
   match require_member "paths" json with
   | `Assoc [] -> ()

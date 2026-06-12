@@ -2,7 +2,9 @@
 
 ## 0.3.0 - Unreleased
 
-- Start 0.3.0 development.
+- Add pure API contracts for endpoint route tables.
+- Add API-level request matching and validation.
+- Allow OpenAPI output from validated API contracts.
 
 ## 0.2.0 - 2026-06-09
 

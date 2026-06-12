@@ -4,12 +4,12 @@
 [![opam](https://badgen.net/opam/v/contract)](https://opam.ocaml.org/packages/contract/)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-`contract` is an OCaml library for describing HTTP API contracts as typed values. The current code covers a small pure core: endpoint definitions, path matching, scalar and JSON decoding, request and response validation, and OpenAPI output.
+`contract` is an OCaml library for describing HTTP API contracts as typed values. The current code covers a small pure core: endpoint definitions, API route matching, scalar and JSON decoding, request and response validation, and OpenAPI output.
 
 ## Current MVP
 
 The current source tree is a thin vertical slice for REST-style JSON APIs. It has no HTTP server dependency.
-A request is a value passed to the validator; a response is a status plus optional JSON body checked against the endpoint's declared responses.
+Endpoints can be grouped into an API value for pure route selection. A request is a value passed to the endpoint or API validator; a response is a status plus optional JSON body checked against the endpoint's declared responses.
 Path parameters are percent-decoded after route matching.
 
 Released package:
