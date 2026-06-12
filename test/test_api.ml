@@ -95,6 +95,17 @@ let malformed_percent_escape_is_reported () =
   |> expect_error_string
        "path parameter id: malformed percent escape (expected: %HH, got: a%zz)"
 
+let api_request_validates_selected_endpoint () =
+  let api = api [ get_user ] in
+  let request = Request.make ~method_:Endpoint.GET ~path:"/users/alice" () in
+  match Validate.api_request api request with
+  | Error errors ->
+      errors |> List.map Error.to_string |> String.concat "\n" |> Alcotest.fail
+  | Ok validated -> (
+      match Validate.path validated "id" Codec.string with
+      | Ok id -> Alcotest.(check string) "id" "alice" id
+      | Error error -> Alcotest.fail (Error.to_string error))
+
 let tests =
   ( "api",
     [
@@ -114,4 +125,6 @@ let tests =
         no_route_match_reports_path;
       Alcotest.test_case "malformed percent escape is reported" `Quick
         malformed_percent_escape_is_reported;
+      Alcotest.test_case "api request validates selected endpoint" `Quick
+        api_request_validates_selected_endpoint;
     ] )

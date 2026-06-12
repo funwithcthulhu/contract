@@ -20,6 +20,10 @@ let expect_endpoint = function
   | Ok endpoint -> endpoint
   | Error error -> Alcotest.fail (Error.to_string error)
 
+let expect_api = function
+  | Ok api -> api
+  | Error error -> Alcotest.fail (Error.to_string error)
+
 let get_user =
   Endpoint.get ~summary:"Fetch a user" ~operation_id:"getUser" "/users/:id"
   |> Result.map (Endpoint.path_param "id" Codec.int)
@@ -51,8 +55,8 @@ let api : Openapi.api =
     endpoints = [ get_user; post_user ];
   }
 
-let tiny_users_api : Openapi.api =
-  { title = "Tiny Users API"; version = "0.2.0"; endpoints = [ get_user ] }
+let tiny_users_contract_api =
+  Api.make ~title:"Tiny Users API" ~version:"0.2.0" [ get_user ] |> expect_api
 
 let member name = function
   | `Assoc fields -> List.assoc_opt name fields
@@ -203,7 +207,7 @@ let output_is_deterministic () =
 
 let output_matches_tiny_users_fixture () =
   let expected = Yojson.Safe.from_file "fixtures/openapi_tiny_users_api.json" in
-  let actual = Openapi.to_yojson tiny_users_api in
+  let actual = tiny_users_contract_api |> Openapi.of_api |> Openapi.to_yojson in
   Alcotest.(check string)
     "openapi fixture"
     (Yojson.Safe.to_string expected)
@@ -212,8 +216,8 @@ let output_matches_tiny_users_fixture () =
 let tiny_users_fixture_output_is_deterministic () =
   Alcotest.(check string)
     "tiny users openapi"
-    (Openapi.to_string tiny_users_api)
-    (Openapi.to_string tiny_users_api)
+    (Openapi.to_string (Openapi.of_api tiny_users_contract_api))
+    (Openapi.to_string (Openapi.of_api tiny_users_contract_api))
 
 let output_escapes_strings () =
   let endpoint =
