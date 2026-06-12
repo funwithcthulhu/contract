@@ -1,5 +1,9 @@
 # Changes
 
+## 0.3.0 - Unreleased
+
+- Start 0.3.0 development.
+
 ## 0.2.0 - 2026-06-09
 
 - Add pure response validation for declared status codes and JSON response
