@@ -7,7 +7,7 @@
  (name contract)
  (synopsis "Typed HTTP API contracts for OCaml")
  (description
-  "A pure core for typed HTTP API contracts, request and response validation, and OpenAPI output.")
+  "A pure core for typed HTTP API contracts, route matching, request and response validation, and OpenAPI output.")
  (license MIT)
  (depends
   (ocaml (>= 5.0))
