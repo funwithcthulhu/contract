@@ -6,9 +6,9 @@
 
 `contract` is an OCaml library for describing HTTP API contracts as typed values. The current code covers a small pure core: endpoint definitions, API route matching, scalar and JSON decoding, request and response validation, and OpenAPI output.
 
-## Current MVP
+## Scope
 
-The current source tree is a thin vertical slice for REST-style JSON APIs. It has no HTTP server dependency.
+`contract` currently targets REST-style JSON APIs. It has no HTTP server dependency.
 Endpoints can be grouped into an API value for pure route selection. A request is a value passed to the endpoint or API validator; a response is a status plus optional JSON body checked against the endpoint's declared responses.
 Path parameters are percent-decoded after route matching.
 
@@ -19,7 +19,7 @@ opam install contract
 ```
 
 See `examples/users_api.ml` for a small users API with `GET /users/:id` and `POST /users`.
-See `examples/http_style_app.ml` for an example-only HTTP-style dispatch wrapper around the pure API validator.
+See `examples/http_style_app.ml` for example-only HTTP-style glue around the pure API validator.
 
 ```sh
 dune exec examples/users_api.exe
