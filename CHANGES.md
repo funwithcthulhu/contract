@@ -5,6 +5,8 @@
 - Add pure API contracts for endpoint route tables.
 - Add API-level request matching and validation.
 - Allow OpenAPI output from validated API contracts.
+- Add an example-only HTTP-style adapter around API validation and response
+  validation.
 
 ## 0.2.0 - 2026-06-09
 

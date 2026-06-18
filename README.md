@@ -19,9 +19,11 @@ opam install contract
 ```
 
 See `examples/users_api.ml` for a small users API with `GET /users/:id` and `POST /users`.
+See `examples/http_style_app.ml` for an example-only HTTP-style dispatch wrapper around the pure API validator.
 
 ```sh
 dune exec examples/users_api.exe
+dune exec examples/http_style_app.exe
 ```
 
 Development:
