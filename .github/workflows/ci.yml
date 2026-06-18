@@ -25,5 +25,10 @@ jobs:
       - name: Test
         run: opam exec -- dune runtest
 
+      - name: Run examples
+        run: |
+          opam exec -- dune exec examples/users_api.exe
+          opam exec -- dune exec examples/http_style_app.exe
+
       - name: Lint opam file
         run: opam lint contract.opam

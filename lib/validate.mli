@@ -24,6 +24,10 @@ val request : Endpoint.t -> Request.t -> (validated, Error.t list) result
     not present in the template is a validation error. Body field strictness is
     controlled by the JSON codec. *)
 
+val api_request : Api.t -> Request.t -> (validated, Error.t list) result
+(** Select an endpoint from an API contract, then validate the request against
+    the selected endpoint. *)
+
 val path : validated -> string -> 'a Codec.t -> ('a, Error.t) result
 (** Decode a matched path parameter from a validated request. *)
 

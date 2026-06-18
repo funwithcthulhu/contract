@@ -99,6 +99,11 @@ let request endpoint request =
             }
         else Error errors
 
+let api_request api incoming =
+  match Api.match_request api incoming with
+  | Error error -> Error [ error ]
+  | Ok endpoint -> request endpoint incoming
+
 let path validated name codec =
   match first_value name validated.path_values with
   | None -> Error (path_param_missing name)

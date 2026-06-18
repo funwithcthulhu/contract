@@ -1,5 +1,12 @@
 type api = { title : string; version : string; endpoints : Endpoint.t list }
 
+let of_api api =
+  {
+    title = Api.title api;
+    version = Api.version api;
+    endpoints = Api.endpoints api;
+  }
+
 let optional name = function
   | None -> []
   | Some value -> [ (name, `String value) ]

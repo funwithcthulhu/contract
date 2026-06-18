@@ -1,3 +1,3 @@
-(executable
- (name users_api)
+(executables
+ (names users_api http_style_app)
  (libraries contract yojson))
